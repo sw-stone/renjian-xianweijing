@@ -341,21 +341,21 @@ footer b{color:var(--red2)}
     <section class="panel active" id="panel-field">
       <!-- ===== 语音输入（讲述人物见闻，AI 自动拆 Q1~Q3） ===== -->
       <div class="form-sheet" style="margin-bottom:18px;border-left:4px solid var(--red);">
-        <div class="sheet-head"><span>语音讲述 · VOICE NOTE</span><span class="mono">VOICE-02 / 浏览器原生识别</span></div>
+        <div class="sheet-head"><span>语音讲述 · VOICE NOTE</span><span class="mono">VOICE-03 / KIMI AI 识别</span></div>
         <div class="form-body" style="padding:20px 24px;">
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;">
             <button class="btn primary" id="btn-voice-start">🎙 开始讲述</button>
             <button class="btn" id="btn-voice-stop" disabled>◼ 停止</button>
-            <span id="voice-status" style="font-size:13px;color:#666;letter-spacing:1px;">点击开始，用 1 分钟讲一个你亲眼见过的人</span>
+            <span id="voice-status" style="font-size:13px;color:#666;letter-spacing:1px;">点"开始讲述"，授权麦克风权限后讲 30~60 秒</span>
           </div>
-          <textarea id="voice-transcript" placeholder="识别中的文字会实时出现在这里……&#10;&#10;提示：普通话讲、慢一点、句子之间略作停顿。可以多次开始/停止，文字会接着续写。" style="width:100%;min-height:120px;padding:12px 14px;font-size:15px;border:1.5px solid var(--ink);border-radius:0;font-family:inherit;background:var(--card);resize:vertical;line-height:1.7;"></textarea>
+          <textarea id="voice-transcript" placeholder="停止录音后，kimi 会自动识别并在这里填上转写文字……&#10;&#10;⚠️ 需要先在下方表单启用 kimi 并填 API Key。&#10;讲完 → 点"停止" → kimi 自动识别 + 拆分到 Q1-Q3，全程 10~30 秒。" style="width:100%;min-height:120px;padding:12px 14px;font-size:15px;border:1.5px solid var(--ink);border-radius:0;font-family:inherit;background:var(--card);resize:vertical;line-height:1.7;"></textarea>
           <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
             <button class="btn primary" id="btn-voice-split" disabled>✂ 智能拆分到 Q1-Q3 →</button>
             <button class="btn" id="btn-voice-split-kimi" disabled title="本地拆不准时，让 kimi-k2.7-code 拆">✨ AI 拆分（kimi）</button>
             <button class="btn" id="btn-voice-copy-prompt" title="复制一段提示词，粘到 opencode 让 AI 拆">📋 复制拆分提示词</button>
             <button class="btn" id="btn-voice-clear">清空</button>
           </div>
-          <div class="hint" style="margin-top:10px;">流程：<b>① 点"开始讲述"</b>用语音讲人物 → <b>② 停止后点"智能拆分"</b>，自动解析 Q1 人物 / Q2 场景 / Q3 细节填进下方表单 → <b>③ 你勾选 Q4-Q7</b> → 开始田野调查。<br>拆分逻辑可用本页规则（本地）或 opencode AI（更准）。</div>
+          <div class="hint" style="margin-top:10px;">流程：<b>① 点"开始讲述"</b>讲 30~60s → <b>② 点"停止"</b>自动调 kimi 音频模型识别+拆解（10-30 秒）→ <b>③ 核对/微调 Q1-Q3</b> → <b>④ 填 Q4-Q7</b> → 开始田野调查。<br>识别：<b>kimi 音频模型</b>（默认 gpt-4o-audio-preview，可在表单区改）；拆分：优先 kimi，失败时可用下方"本地规则拆分"。</div>
         </div>
 
         <!-- 从 opencode 粘回拆解结果的接收区 -->
@@ -448,9 +448,31 @@ footer b{color:var(--red2)}
               <div id="kimi-config" style="display:none;margin-top:8px;padding:12px;background:rgba(180,60,50,.06);border-left:2px solid #b43c32;font-size:13px;">
                 <label style="font-size:12.5px;display:block;margin-bottom:6px;letter-spacing:1px;">TOKENDANCE API KEY（Bearer token，仅本机保存）</label>
                 <input type="password" id="f-kimi-key" placeholder="sk-..." style="width:100%;padding:8px 10px;border:1px solid var(--ink);font-family:monospace;font-size:13px;background:var(--card);">
-                <label style="font-size:12.5px;display:block;margin:10px 0 6px;letter-spacing:1px;">模型名（默认 kimi-k2.7-code）</label>
-                <input type="text" id="f-kimi-model" placeholder="kimi-k2.7-code" style="width:100%;padding:8px 10px;border:1px solid var(--ink);font-family:monospace;font-size:13px;background:var(--card);">
-                <div style="margin-top:6px;color:var(--ink-soft,#666);font-size:12.5px;line-height:1.6;">API 端点：<code>https://api.tokendance.space/v1/chat/completions</code>（OpenAI 兼容）。<a href="https://tokendance.space/models/kimi-k2.7-code" target="_blank" rel="noopener" style="color:var(--red);">看模型详情 →</a></div>
+                <label style="font-size:12.5px;display:block;margin:10px 0 6px;letter-spacing:1px;">文本模型（档案生成 + AI 拆分用）</label>
+                <select id="f-kimi-model" style="width:100%;padding:8px 10px;border:1px solid var(--ink);font-family:monospace;font-size:13px;background:var(--card);">
+                  <option value="kimi-k2.7-code">kimi-k2.7-code（代码模型 · 推理快）</option>
+                  <option value="kimi-k2.7-code-highspeed">kimi-k2.7-code-highspeed（高速版 260 tok/s）</option>
+                  <option value="kimi-k3">kimi-k3（思考型 · 推荐拆分/生成场景）</option>
+                  <option value="moonshot-v1-128k">moonshot-v1-128k（长上下文通用）</option>
+                  <option value="moonshot-v1-32k">moonshot-v1-32k（通用）</option>
+                  <option value="moonshot-v1-8k">moonshot-v1-8k（短上下文省钱）</option>
+                  <option value="kimi-k2-0905-preview">kimi-k2-0905-preview（k2 主版本，无思考）</option>
+                  <option value="kimi-k2-turbo-preview">kimi-k2-turbo-preview（k2 高速版）</option>
+                </select>
+                <div style="margin-top:4px;color:var(--ink-soft,#666);font-size:12px;">选 kimi-k3 会自动启用 <code>reasoning_effort=low</code>，避免长思考</div>
+                <label style="font-size:12.5px;display:block;margin:10px 0 6px;letter-spacing:1px;">音频模型（语音识别用，默认 gpt-4o-audio-preview）</label>
+                <input type="text" id="f-kimi-audio-model" placeholder="gpt-4o-audio-preview" style="width:100%;padding:8px 10px;border:1px solid var(--ink);font-family:monospace;font-size:13px;background:var(--card);">
+
+                <div style="margin-top:16px;padding-top:12px;border-top:1px dashed var(--rule,#d9d4c7);">
+                  <label style="font-size:12.5px;display:block;margin-bottom:8px;letter-spacing:1px;color:#b43c32;">📢 讯飞语音识别（中文专精 · <b>推荐使用</b>）</label>
+                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+                    <input type="text" id="f-iflytek-appid" placeholder="APPID" style="padding:8px 10px;border:1px solid var(--ink);font-family:monospace;font-size:12px;background:var(--card);">
+                    <input type="password" id="f-iflytek-apikey" placeholder="APIKey" style="padding:8px 10px;border:1px solid var(--ink);font-family:monospace;font-size:12px;background:var(--card);">
+                    <input type="password" id="f-iflytek-apisecret" placeholder="APISecret" style="padding:8px 10px;border:1px solid var(--ink);font-family:monospace;font-size:12px;background:var(--card);">
+                  </div>
+                  <div style="margin-top:6px;color:var(--ink-soft,#666);font-size:12px;line-height:1.6;">讯飞 IAT 流式听写，免费版每天 500 次。<a href="https://console.xfyun.cn/services/iat" target="_blank" rel="noopener" style="color:var(--red);">去讯飞控制台创建应用拿密钥 →</a></div>
+                </div>
+                <div style="margin-top:6px;color:var(--ink-soft,#666);font-size:12.5px;line-height:1.6;">API 端点：<code>https://tokendance.space/gateway/v1/chat/completions</code>（OpenAI 兼容）。<a href="https://tokendance.space/models/kimi-k2.7-code" target="_blank" rel="noopener" style="color:var(--red);">看模型详情 →</a></div>
               </div>
             </div>
           </div>
@@ -561,7 +583,7 @@ function pickN(rng,arr,n){var c=arr.slice(),o=[];while(o.length<n&&c.length){o.p
 function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
 function fmtSec(s){var m=Math.floor(s/60),ss=Math.round(s%60);return m+':'+(ss<10?'0':'')+ss}
 function addMin(hhmm,add){var p=hhmm.split(':');var t=(+p[0])*60+(+p[1])+add;var h=Math.floor(t/60)%24,m=t%60;return (h<10?'0':'')+h+':'+(m<10?'0':'')+m}
-function toast(msg){var t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._tm);t._tm=setTimeout(function(){t.classList.remove('show')},2400)}
+function toast(msg,duration){var t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._tm);t._tm=setTimeout(function(){t.classList.remove('show')},duration||2400)}
 
 /* ---------- 本地存储 ---------- */
 var LS_TPL='rjmx_templates_v2', LS_FORM='rjmx_form_v2', LS_NOTICE='rjmx_notice_v2';
@@ -1813,58 +1835,326 @@ function resetAll(){
 
 /* ---------- LLM 调用：词元跳动 kimi-k2.7-code（可选） ---------- */
 /* OpenAI 兼容 /chat/completions；返回 Promise，失败 resolve(null) */
-var KIMI_BASE='https://api.tokendance.space/v1';
+var KIMI_BASE='https://tokendance.space/gateway/v1';
 var KIMI_MODEL_DEFAULT='kimi-k2.7-code';
 function callKimi(prompt, opts){
   opts=opts||{};
   return new Promise(function(resolve){
     var key=(localStorage.getItem('rj_kimi_key')||'').trim();
-    if(!key){resolve(null);return}
+    if(!key){resolve({error:'没填 Kimi API Key（TokenDance 那个 sk-...）'});return}
     var model=(localStorage.getItem('rj_kimi_model')||KIMI_MODEL_DEFAULT).trim()||KIMI_MODEL_DEFAULT;
     var timeout=opts.timeout||25000;
-    var timer=setTimeout(function(){resolve(null)}, timeout);
+    var timer=setTimeout(function(){resolve({error:'调用超时（'+timeout/1000+'秒）'})}, timeout);
+    /* 组装请求体 */
+    var reqBody={
+      model:model,
+      messages:(opts.system?[{role:'system',content:opts.system}]:[]).concat([{role:'user',content:prompt}]),
+      temperature:opts.temperature==null?0.7:opts.temperature,
+      max_tokens:opts.max_tokens||2000
+    };
+    /* kimi-k3 是思考模型，加 reasoning_effort=low 让它别陷入长思考 */
+    if(/kimi-k3/i.test(model)){
+      reqBody.reasoning_effort=opts.reasoning_effort||'low';
+    }
     fetch(KIMI_BASE+'/chat/completions',{
       method:'POST',
       headers:{
         'Content-Type':'application/json',
         'Authorization':'Bearer '+key
       },
-      body:JSON.stringify({
-        model:model,
-        messages:(opts.system?[{role:'system',content:opts.system}]:[]).concat([{role:'user',content:prompt}]),
-        temperature:opts.temperature==null?0.7:opts.temperature,
-        max_tokens:opts.max_tokens||2000
-      })
+      body:JSON.stringify(reqBody)
     }).then(function(r){
-      if(!r.ok)throw new Error('HTTP '+r.status);
-      return r.json()
-    }).then(function(data){
-      clearTimeout(timer);
-      var txt=data&&data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
-      resolve(txt?String(txt).trim():null);
+      if(!r.ok){
+        return r.text().then(function(body){
+          clearTimeout(timer);
+          resolve({error:'HTTP '+r.status+'：'+body.slice(0,200)});
+        });
+      }
+      return r.json().then(function(data){
+        clearTimeout(timer);
+        var choice=data&&data.choices&&data.choices[0]&&data.choices[0].message;
+        if(!choice){resolve({error:'API 返回为空（'+JSON.stringify(data).slice(0,150)+'）'});return}
+        var txt=choice.content;
+        /* kimi-k3 思考模式：content 可能是数组，或者最终答案在 content 里但 reasoning_content 是过程 */
+        if(Array.isArray(txt)){
+          txt=txt.map(function(p){return typeof p==='string'?p:(p.text||'')}).join('');
+        }
+        if(!txt&&choice.reasoning_content){
+          /* 极端情况：content 空但 reasoning 有内容（不应该） */
+          txt=choice.reasoning_content;
+        }
+        resolve(txt?{text:String(txt).trim()}:{error:'返回 content 为空（'+JSON.stringify(choice).slice(0,200)+'）'});
+      });
     }).catch(function(e){
       clearTimeout(timer);
       console.warn('kimi 调用失败',e);
-      resolve(null);
+      /* 区分网络错（CORS/域名不通/HTTPS） */
+      var msg=String(e&&e.message||e);
+      if(/NetworkError|Failed to fetch|load failed/i.test(msg)){
+        resolve({error:'网络请求失败：可能是 API 域名不对，或者被 CORS 拦截。当前用的是 '+KIMI_BASE});
+      }else{
+        resolve({error:msg});
+      }
     });
   });
 }
-/* kimi 拆分口述：输入 transcript，返回 {person, scene, detail} 或 null */
+/* kimi 拆分口述：输入 transcript，返回 {person, scene, detail} 或 {error} */
 function kimiSplitVoice(text){
-  var prompt='把下面这段口述拆解成三段，严格输出 JSON，不要多余文字。\n\n'+
-    '输出格式（严格）：\n{"person":"...","scene":"...","detail":"..."}\n\n'+
-    '要求：\n- person：人物职业/身份，12 字内\n- scene：具体场景，20 字内\n- detail：完整保留"嘴上说X，做Y"的对位关系，60 字内\n\n'+
-    '口述：「'+text+'」';
-  return callKimi(prompt,{max_tokens:500,temperature:0.3}).then(function(txt){
-    if(!txt)return null;
-    /* 提取 JSON */
-    var m=txt.match(/\{[\s\S]*\}/);
-    if(!m)return null;
-    try{
-      var o=JSON.parse(m[0]);
-      if(o.person&&o.scene&&o.detail)return o;
-      return null;
-    }catch(e){return null}
+  var prompt='请仔细阅读下面这段口述，把它拆成三个部分：\n\n'+
+    '口述：「'+text+'」\n\n'+
+    '请严格按照下面的格式输出，不要输出任何其他内容，不要加引号、不要解释、不要 JSON：\n\n'+
+    '人物：xxx\n场景：xxx\n细节：xxx\n\n'+
+    '规则：\n'+
+    '1. 人物写人物的职业或身份，不超过 12 字\n'+
+    '2. 场景写具体地点或时刻，不超过 20 字\n'+
+    '3. 细节是口述里"嘴上说X、实际做Y"的完整反差描述，不超过 60 字\n'+
+    '4. 字段名必须是"人物/场景/细节"这三个中文词，不能改\n'+
+    '5. 每个字段后面必须是中文冒号"："\n'+
+    '6. 一共三行，不能多也不能少';
+  return callKimi(prompt,{max_tokens:300,temperature:0.2}).then(function(r){
+    if(!r)return {error:'未知错误'};
+    if(r.error)return r;
+    var txt=r.text;
+    console.log('[kimi 原始返回]',txt);
+    /* 逐行解析："人物：xxx / 场景：xxx / 细节：xxx" */
+    var person='',scene='',detail='';
+    txt.split(/\n/).forEach(function(line){
+      line=line.trim();
+      if(!line)return;
+      /* 兼容英文冒号 */
+      var mP=line.match(/^(人物|person|who|角色)\s*[:：]\s*(.+)$/i);
+      var mS=line.match(/^(场景|scene|where|setting|地点)\s*[:：]\s*(.+)$/i);
+      var mD=line.match(/^(细节|detail|contrast|反差|关键细节)\s*[:：]\s*(.+)$/i);
+      if(mP)person=mP[2].trim();
+      else if(mS)scene=mS[2].trim();
+      else if(mD)detail=mD[2].trim();
+    });
+    console.log('[解析出] person:',person,'scene:',scene,'detail:',detail);
+    if(person&&scene&&detail)return {person:person,scene:scene,detail:detail};
+    /* 全都为空：把 kimi 的原始返回也带回去，让上层塞到 textarea */
+    if(!person&&!scene&&!detail){
+      return {person:'',scene:'',detail:'',_rawText:txt,_empty:true};
+    }
+    /* 部分有值就返回部分 */
+    return {person:person||'',scene:scene||'',detail:detail||'',
+            _partial:true,_rawText:txt.slice(0,200)};
+  });
+}
+
+/* ---------- 讯飞 IAT 流式听写（中文 ASR 专精） ---------- */
+/* 浏览器音频采集：AudioContext 输出 PCM 16k 16bit 单声道 */
+var IFLYTEK_WS_URL='wss://iat-api.xfyun.cn/v2/iat';
+
+/* 读取讯飞三元组 */
+function iflytekGetConfig(){
+  return {
+    appid:(localStorage.getItem('rj_iflytek_appid')||'').trim(),
+    apiKey:(localStorage.getItem('rj_iflytek_apikey')||'').trim(),
+    apiSecret:(localStorage.getItem('rj_iflytek_apisecret')||'').trim()
+  };
+}
+
+/* 签名：HMAC-SHA256(host+date+request-line)，base64 */
+function iflytekSign(apiSecret, host, date, requestLine){
+  var signatureOrigin='host: '+host+'\ndate: '+date+'\n'+requestLine;
+  return crypto.subtle.importKey('raw', new TextEncoder().encode(apiSecret),
+    {name:'HMAC',hash:'SHA-256'}, false, ['sign']
+  ).then(function(key){
+    return crypto.subtle.sign('HMAC', key, new TextEncoder().encode(signatureOrigin));
+  }).then(function(buf){
+    return btoa(String.fromCharCode.apply(null, new Uint8Array(buf)));
+  });
+}
+
+/* 生成完整带鉴权的 WebSocket URL */
+function iflytekBuildUrl(cfg){
+  var host='iat-api.xfyun.cn';
+  var path='/v2/iat';
+  var date=new Date().toUTCString();
+  var requestLine='GET '+path+' HTTP/1.1';
+  return iflytekSign(cfg.apiSecret, host, date, requestLine).then(function(signature){
+    var authOrigin='api_key="'+cfg.apiKey+'", algorithm="hmac-sha256", headers="host date request-line", signature="'+signature+'"';
+    var auth=btoa(unescape(encodeURIComponent(authOrigin)));
+    return IFLYTEK_WS_URL+'?host='+encodeURIComponent(host)+'&date='+encodeURIComponent(date)+'&authorization='+encodeURIComponent(auth);
+  });
+}
+
+/* 浏览器录音 → PCM 16k 16bit 单声道 Int16Array */
+function capturePcm16k(){
+  return navigator.mediaDevices.getUserMedia({audio:{channelCount:1,sampleRate:16000,echoCancellation:true,noiseSuppression:true}}).then(function(stream){
+    var audioCtx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
+    var source=audioCtx.createMediaStreamSource(stream);
+    /* ScriptProcessor 收集 PCM 数据（deprecated 但所有浏览器都支持；AudioWorklet 更现代但要单独文件） */
+    var bufSize=4096;
+    var processor=audioCtx.createScriptProcessor(bufSize,1,1);
+    var chunks=[];
+    processor.onaudioprocess=function(e){
+      var input=e.inputBuffer.getChannelData(0);
+      /* float32 → int16 */
+      var int16=new Int16Array(input.length);
+      for(var i=0;i<input.length;i++){
+        var s=Math.max(-1,Math.min(1,input[i]));
+        int16[i]=s<0?s*0x8000:s*0x7FFF;
+      }
+      chunks.push(int16);
+    };
+    source.connect(processor);
+    processor.connect(audioCtx.destination);
+    return {stream:stream,audioCtx:audioCtx,processor:processor,source:source,chunks:chunks};
+  });
+}
+
+/* 把 Int16Array chunks 拼成一个 Uint8Array（小端字节流） */
+function chunksToBytes(chunks){
+  var total=0;chunks.forEach(function(c){total+=c.length*2});
+  var out=new Uint8Array(total);
+  var off=0;
+  chunks.forEach(function(c){
+    for(var i=0;i<c.length;i++){
+      var v=c[i];
+      out[off++]=v&0xFF;
+      out[off++]=(v>>8)&0xFF;
+    }
+  });
+  return out;
+}
+
+/* Uint8Array → base64 */
+function u8ToBase64(u8){
+  var bin='';
+  var CHUNK=0x8000;
+  for(var i=0;i<u8.length;i+=CHUNK){
+    bin+=String.fromCharCode.apply(null,u8.subarray(i,i+CHUNK));
+  }
+  return btoa(bin);
+}
+
+/* 调用讯飞 IAT 识别，传入 Uint8Array PCM 字节流，返回 Promise<string> */
+function iflytekRecognize(pcmBytes){
+  return new Promise(function(resolve,reject){
+    var cfg=iflytekGetConfig();
+    if(!cfg.appid||!cfg.apiKey||!cfg.apiSecret){reject(new Error('缺少讯飞 APPID/APIKey/APISecret'));return}
+    iflytekBuildUrl(cfg).then(function(url){
+      var ws=new WebSocket(url);
+      var segments={};     /* sn → text，用于 pgs=rpl 修正 */
+      var opened=false;
+      var FRAME_BYTES=1280;    /* 40ms @ 16k·16bit·mono */
+      var cursor=0;            /* 字节游标（原始 PCM 字节） */
+      var isFirst=true;
+      var statusTimer=null;
+      var finalSent=false;
+
+      /* 每帧：切字节再单独 base64，保证 base64 不被切碎 */
+      var sendFrame=function(){
+        if(ws.readyState!==1)return;
+        if(cursor>=pcmBytes.length){
+          /* 已发完，发"结束标识" */
+          if(!finalSent){
+            finalSent=true;
+            try{ws.send(JSON.stringify({data:{status:2}}))}catch(e){}
+          }
+          if(statusTimer){clearInterval(statusTimer);statusTimer=null}
+          return;
+        }
+        var end=Math.min(cursor+FRAME_BYTES,pcmBytes.length);
+        var chunk=pcmBytes.slice(cursor,end);
+        var chunkB64=u8ToBase64(chunk);
+        var msg={
+          data:{
+            status:isFirst?0:1,
+            format:'audio/L16;rate=16000',
+            encoding:'raw',
+            audio:chunkB64
+          }
+        };
+        if(isFirst){
+          msg.common={app_id:cfg.appid};
+          /* 不开 dwa=wpgs，简化逻辑，避免 pgs=rpl 累积问题 */
+          msg.business={language:'zh_cn',domain:'iat',accent:'mandarin',ptt:1,nunum:1,eos:3000};
+        }
+        try{ws.send(JSON.stringify(msg))}catch(e){}
+        isFirst=false;
+        cursor=end;
+        /* 最后一帧发完后下一次 tick 再发 status:2（给服务端缓冲时间） */
+        if(cursor>=pcmBytes.length){
+          setTimeout(function(){
+            if(!finalSent){
+              finalSent=true;
+              try{ws.send(JSON.stringify({data:{status:2}}))}catch(e){}
+            }
+          },100);
+          if(statusTimer){clearInterval(statusTimer);statusTimer=null}
+        }
+      };
+
+      ws.onopen=function(){
+        opened=true;
+        sendFrame();
+        statusTimer=setInterval(sendFrame,40);
+      };
+      ws.onmessage=function(e){
+        try{
+          var data=JSON.parse(e.data);
+          if(data.code!==0){
+            reject(new Error(data.message||('code '+data.code)));
+            try{ws.close()}catch(err){}
+            return;
+          }
+          if(data.data&&data.data.result&&data.data.result.ws){
+            var words='';
+            data.data.result.ws.forEach(function(w){
+              if(w.cw)w.cw.forEach(function(c){words+=(c.w||'')});
+            });
+            var sn=data.data.result.sn;
+            if(typeof sn==='number'){
+              /* 按 sn 记录，最后按 sn 顺序拼接（解决 pgs=rpl 修正问题） */
+              segments[sn]=words;
+            }
+          }
+          if(data.data&&data.data.status===2){
+            try{ws.close()}catch(err){}
+            var final=Object.keys(segments).sort(function(a,b){return a-b}).map(function(k){return segments[k]}).join('');
+            resolve(final);
+          }
+        }catch(err){console.warn('解析失败',err)}
+      };
+      ws.onerror=function(e){if(!opened)reject(new Error('WebSocket 握手失败'))};
+      ws.onclose=function(){
+        if(statusTimer){clearInterval(statusTimer);statusTimer=null}
+        var final=Object.keys(segments).sort(function(a,b){return a-b}).map(function(k){return segments[k]}).join('');
+        if(final)resolve(final);
+        else reject(new Error('连接被关闭，未拿到识别结果'));
+      };
+      /* 65s 超时（讯飞上限 60s + 缓冲） */
+      setTimeout(function(){
+        if(ws.readyState===1){
+          try{ws.close()}catch(e){}
+          var final=Object.keys(segments).sort(function(a,b){return a-b}).map(function(k){return segments[k]}).join('');
+          if(final)resolve(final);else reject(new Error('识别超时'));
+        }
+      },65000);
+    }).catch(reject);
+  });
+}
+
+/* 完整流程：录音 → PCM → 讯飞识别 → 返回文字 */
+function iflytekVoiceToText(){
+  return capturePcm16k().then(function(cap){
+    voiceSetStatus('🎙 正在聆听…讲完后点"停止"');
+    return new Promise(function(resolve,reject){
+      /* 等待用户点停止 */
+      window._voiceStopFn=function(){
+        /* 停止采集 */
+        try{cap.processor.disconnect()}catch(e){}
+        try{cap.source&&cap.source.disconnect&&cap.source.disconnect()}catch(e){}
+        try{cap.stream.getTracks().forEach(function(t){t.stop()})}catch(e){}
+        try{cap.audioCtx.close()}catch(e){}
+        if(!cap.chunks.length){reject(new Error('没有录到内容'));return}
+        var bytes=chunksToBytes(cap.chunks);
+        voiceSetStatus('⏳ 录音 '+fmtBytes(bytes.length)+'，讯飞识别中…');
+        iflytekRecognize(bytes).then(resolve,reject);
+      };
+    });
   });
 }
 
@@ -1905,20 +2195,10 @@ function injectOnlineSnippets(snippets, form){
   return added;
 }
 
-/* ---------- 语音输入（Web Speech API） ---------- */
-var voiceRecog=null, voiceActive=false;
+/* ---------- 语音输入（录音 → 讯飞 IAT 中文识别） ---------- */
+var voiceActive=false;
 function voiceIsSupported(){
-  return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
-}
-function voiceInit(){
-  if(!voiceIsSupported())return null;
-  var Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
-  var r = new Ctor();
-  r.lang='zh-CN';
-  r.continuous=true;         /* 持续识别 */
-  r.interimResults=true;     /* 实时中间结果 */
-  r.maxAlternatives=1;
-  return r;
+  return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && (window.AudioContext||window.webkitAudioContext) && window.WebSocket && window.crypto && window.crypto.subtle);
 }
 function voiceSetStatus(txt, isErr){
   var s=$('#voice-status');
@@ -1927,67 +2207,55 @@ function voiceSetStatus(txt, isErr){
 }
 function voiceStart(){
   if(!voiceIsSupported()){
-    voiceSetStatus('当前浏览器不支持语音识别，请用 Chrome / Edge', true);
-    toast('请换 Chrome / Edge 浏览器用语音功能');
+    voiceSetStatus('当前浏览器不支持麦克风录音，请用 Chrome / Edge / Safari', true);
+    toast('请换现代浏览器用语音功能');
     return;
   }
   if(voiceActive)return;
-  try{
-    voiceRecog=voiceInit();
-    if(!voiceRecog){voiceSetStatus('初始化失败', true);return}
-    var finalText=$('#voice-transcript').value;
-    voiceRecog.onstart=function(){
-      voiceActive=true;
-      $('#btn-voice-start').disabled=true;
-      $('#btn-voice-stop').disabled=false;
-      $('#btn-voice-split').disabled=true;
-      voiceSetStatus('🎙 正在聆听…讲完后点"停止"');
-    };
-    voiceRecog.onerror=function(e){
-      var msg={
-        'not-allowed':'❌ 麦克风权限被拒。请在地址栏左侧允许麦克风访问',
-        'no-speech':'⚠ 没有听到声音，请再靠近一点',
-        'audio-capture':'❌ 找不到麦克风',
-        'network':'❌ 网络错误（语音识别需要联网）',
-        'aborted':'已取消'
-      }[e.error]||('错误：'+e.error);
-      voiceSetStatus(msg, true);
-      voiceActive=false;
-      $('#btn-voice-start').disabled=false;
-      $('#btn-voice-stop').disabled=true;
-    };
-    voiceRecog.onend=function(){
-      voiceActive=false;
-      $('#btn-voice-start').disabled=false;
-      $('#btn-voice-stop').disabled=true;
-      var hasContent=$('#voice-transcript').value.trim().length>0;
-      $('#btn-voice-split').disabled=!hasContent;
-      if(hasContent)voiceSetStatus('✓ 已停止，共 '+$('#voice-transcript').value.length+' 字，可以拆分了');
-      else voiceSetStatus('已停止，但没有识别到内容');
-    };
-    voiceRecog.onresult=function(e){
-      var interim='';
-      for(var i=e.resultIndex;i<e.results.length;i++){
-        var r=e.results[i];
-        if(r.isFinal)finalText+=r[0].transcript;
-        else interim+=r[0].transcript;
-      }
-      $('#voice-transcript').value=finalText+(interim?(' '+interim):'');
-      /* 自动滚动到底部 */
-      $('#voice-transcript').scrollTop=$('#voice-transcript').scrollHeight;
-    };
-    voiceRecog.start();
-  }catch(err){
-    voiceSetStatus('启动失败：'+err.message, true);
+  var cfg=iflytekGetConfig();
+  if(!cfg.appid||!cfg.apiKey||!cfg.apiSecret){
+    voiceSetStatus('请先在下方"讯飞语音识别配置"填入 APPID / APIKey / APISecret', true);
+    toast('需要讯飞三元组密钥');
+    $('#f-use-kimi').checked=true;
+    $('#kimi-config').style.display='block';
+    setTimeout(function(){$('#f-iflytek-appid').focus()},100);
+    return;
   }
+  voiceActive=true;
+  $('#btn-voice-start').disabled=true;
+  $('#btn-voice-stop').disabled=false;
+  $('#btn-voice-split').disabled=true;
+  $('#btn-voice-split-kimi').disabled=true;
+  $('#voice-transcript').value='';
+  iflytekVoiceToText().then(function(text){
+    voiceActive=false;
+    $('#btn-voice-start').disabled=false;
+    $('#btn-voice-stop').disabled=true;
+    $('#voice-transcript').value=text;
+    $('#btn-voice-split').disabled=!text.trim();
+    $('#btn-voice-split-kimi').disabled=!text.trim();
+    voiceSetStatus('✓ 识别完成（共 '+text.length+' 字），可以点"智能拆分"或"AI 拆分"');
+    toast('✓ 讯飞识别完成，共 '+text.length+' 字');
+  }).catch(function(err){
+    voiceActive=false;
+    $('#btn-voice-start').disabled=false;
+    $('#btn-voice-stop').disabled=true;
+    voiceSetStatus('❌ '+(err.message||err), true);
+  });
 }
 function voiceStop(){
-  if(voiceRecog&&voiceActive){voiceRecog.stop()}
+  if(window._voiceStopFn){window._voiceStopFn();window._voiceStopFn=null}
 }
 function voiceClear(){
   $('#voice-transcript').value='';
   $('#btn-voice-split').disabled=true;
-  voiceSetStatus('点击开始，用 1 分钟讲一个你亲眼见过的人');
+  $('#btn-voice-split-kimi').disabled=true;
+  voiceSetStatus('点"开始讲述"，用 30~60 秒讲一个你亲眼见过的人');
+}
+function fmtBytes(n){
+  if(n<1024)return n+'B';
+  if(n<1024*1024)return (n/1024).toFixed(1)+'KB';
+  return (n/1024/1024).toFixed(1)+'MB';
 }
 
 /* 从 transcript 本地规则拆解 Q1/Q2/Q3（快但不准） */
@@ -2069,9 +2337,15 @@ function voiceSplitLocal(text){
 /* 把拆解结果应用到表单 */
 function voiceApplyToForm(parsed){
   if(!parsed){toast('拆解失败，请重试或调整原文');return}
-  $('#f-person').value=parsed.person;
-  $('#f-scene').value=parsed.scene;
-  $('#f-detail').value=parsed.detail;
+  var person=(parsed.person==null||parsed.person===undefined)?'':String(parsed.person);
+  var scene=(parsed.scene==null||parsed.scene===undefined)?'':String(parsed.scene);
+  var detail=(parsed.detail==null||parsed.detail===undefined)?'':String(parsed.detail);
+  if(!person||!scene||!detail){
+    toast('⚠ 拆解结果有空字段：person='+(person||'[空]')+' / scene='+(scene||'[空]')+' / detail='+(detail||'[空]').slice(0,30));
+  }
+  $('#f-person').value=person;
+  $('#f-scene').value=scene;
+  $('#f-detail').value=detail;
   saveFormDraft();
   toast('✓ 已填入 Q1 / Q2 / Q3，请勾选 Q4-Q7 后点开始');
   /* 让完整表单滚入视野：找到含 f-person 的最近 form-sheet */
@@ -2217,6 +2491,17 @@ function doQuickToForm(){
 
 /* ---------- 初始化 ---------- */
 (function init(){
+  /* 一次性预填：仅 file:// 且 URL 带 #setup-keys 时跑（避免误触） */
+  if(location.protocol==='file:'&&location.hash.indexOf('setup-keys')>=0){
+    try{
+      localStorage.setItem('rj_iflytek_appid','e15d554a');
+      localStorage.setItem('rj_iflytek_apikey','2452f31a3f84e63c0c570f4ffd761607');
+      localStorage.setItem('rj_iflytek_apisecret','MGYzZDYzYTA3OTAyODY4ODVlNDljNWY1');
+      /* 清掉 hash，防刷新重复 */
+      history.replaceState(null,'',location.pathname);
+      setTimeout(function(){toast('✓ 讯飞密钥已注入本机')},300);
+    }catch(e){console.warn('预填失败',e)}
+  }
   $$('#tabs .tab').forEach(function(b){b.onclick=function(){go(b.getAttribute('data-tab'))}});
   refreshTplSelect(); renderTplGrid();
 
@@ -2265,14 +2550,34 @@ function doQuickToForm(){
   $('#f-kimi-key').addEventListener('input',function(){
     try{localStorage.setItem('rj_kimi_key',this.value.trim())}catch(e){}
   });
-  $('#f-kimi-model').addEventListener('input',function(){
+  $('#f-kimi-model').addEventListener('change',function(){
     try{localStorage.setItem('rj_kimi_model',this.value.trim())}catch(e){}
+  });
+  $('#f-kimi-audio-model').addEventListener('input',function(){
+    try{localStorage.setItem('rj_kimi_audio_model',this.value.trim())}catch(e){}
+  });
+  /* 讯飞三元组持久化 */
+  $('#f-iflytek-appid').addEventListener('input',function(){
+    try{localStorage.setItem('rj_iflytek_appid',this.value.trim())}catch(e){}
+  });
+  $('#f-iflytek-apikey').addEventListener('input',function(){
+    try{localStorage.setItem('rj_iflytek_apikey',this.value.trim())}catch(e){}
+  });
+  $('#f-iflytek-apisecret').addEventListener('input',function(){
+    try{localStorage.setItem('rj_iflytek_apisecret',this.value.trim())}catch(e){}
   });
   try{
     var savedKimiKey=localStorage.getItem('rj_kimi_key')||'';
     if(savedKimiKey)$('#f-kimi-key').value=savedKimiKey;
     var savedKimiModel=localStorage.getItem('rj_kimi_model')||'';
     if(savedKimiModel)$('#f-kimi-model').value=savedKimiModel;
+    var savedKimiAudioModel=localStorage.getItem('rj_kimi_audio_model')||'';
+    if(savedKimiAudioModel)$('#f-kimi-audio-model').value=savedKimiAudioModel;
+    /* 讯飞三元组恢复 */
+    ['appid','apikey','apisecret'].forEach(function(k){
+      var v=localStorage.getItem('rj_iflytek_'+k)||'';
+      if(v)$('#f-iflytek-'+k).value=v;
+    });
     var useKimi=localStorage.getItem('rj_use_kimi')==='1';
     if(useKimi){$('#f-use-kimi').checked=true;$('#kimi-config').style.display='block'}
   }catch(e){}
@@ -2366,12 +2671,24 @@ function doQuickToForm(){
     var btn=this;btn.disabled=true;var oldText=btn.textContent;btn.textContent='kimi 拆分中…';
     kimiSplitVoice(text).then(function(res){
       btn.disabled=false;btn.textContent=oldText;
-      if(res){
-        voiceApplyToForm(res);
-        toast('kimi 拆分完成');
-      }else{
-        toast('kimi 拆分失败，试试本地规则拆分');
+      console.log('[拆分返回值]',res);
+      if(res.error){
+        toast('❌ '+res.error,5000);
+        return;
       }
+      /* 检查是否真的拿到值 */
+      var p=(res.person||'').trim(),s=(res.scene||'').trim(),d=(res.detail||'').trim();
+      if(!p&&!s&&!d){
+        /* 全空：把原始返回塞到 textarea，让用户直接看到 kimi 实际返回了什么 */
+        var raw=res._rawText||'(kimi 返回为空)';
+        $('#voice-transcript').value='【kimi 原始返回内容】\n'+raw+'\n\n【说明】\nAI 没能从这段返回里解析出 人物/场景/细节 三栏。\n你可以：\n① 手抄里面应该有的内容到下方表单\n② 删掉这段，点"✂ 智能拆分"（本地规则）\n③ 把这个截图发给开发者';
+        toast('⚠ kimi 返回了三栏但都是空的，原始返回已塞到上面');
+        return;
+      }
+      if(!p||!s||!d){
+        toast('⚠ 部分字段为空：person='+(p||'[空]')+' scene='+(s||'[空]')+' detail='+(d||'[空]'),5000);
+      }
+      voiceApplyToForm({person:p,scene:s,detail:d});
     });
   };
 
@@ -2390,9 +2707,11 @@ function doQuickToForm(){
       '【输出格式】严格输出 JSON，所有字段都必须存在，不要省略：\n'+
       '{"identity":"一句话身份定位","desire":{"overt":"显性欲望","covert":"隐性欲望"},"language":[{"line":"口头禅1","when":"使用时机"},{"line":"口头禅2","when":"时机"},{"line":"口头禅3","when":"时机"},{"line":"口头禅4","when":"时机"},{"line":"口头禅5","when":"时机"}],"microactions":[{"action":"微动作1","reveals":"暴露心态"},{"action":"微动作2","reveals":"心态"},{"action":"微动作3","reveals":"心态"},{"action":"微动作4","reveals":"心态"},{"action":"微动作5","reveals":"心态"}],"props":[{"item":"物件1","function":"叙事功能"},{"item":"物件2","function":"功能"},{"item":"物件3","function":"功能"}],"relationships":"对不同人的态度差别（一段话）","contrasts":[{"say":"嘴上说","do":"实际做"},{"say":"嘴上说","do":"实际做"},{"say":"嘴上说","do":"实际做"},{"say":"嘴上说","do":"实际做"},{"say":"嘴上说","do":"实际做"}],"situations":[{"type":"日常情境","story":"一段话"},{"type":"意外情境","story":"一段话"},{"type":"高光情境","story":"一段话"}],"shots":[{"time":"0-10s","shot":"镜头描述"},{"time":"10-20s","shot":"镜头"},{"time":"20-30s","shot":"镜头"},{"time":"30-40s","shot":"镜头"},{"time":"40-50s","shot":"镜头"},{"time":"50-60s","shot":"镜头"}],"risks":{"empathy":3,"comprehension":4,"harm":2,"fix":"若误伤≥3必须给替代写法"},"checklist":["待确认观察1","待确认观察2","待确认观察3"]}\n\n'+
       '要求：\n- 所有内容必须基于用户的"亲眼细节"展开，不要瞎编\n- 口头禅、微动作、物件要具体到"演员能照着演"的程度\n- 误伤风险 harm≥3 时，fix 字段必须给出替代写法\n- 不要影射具体真人，不写真实姓名\n\n直接输出 JSON 对象，不要其他多余文字。';
-    callKimi(prompt,{max_tokens:3000,temperature:0.7,timeout:45000}).then(function(txt){
+    callKimi(prompt,{max_tokens:3000,temperature:0.7,timeout:45000}).then(function(r){
       btn.disabled=false;btn.textContent=oldText;
-      if(!txt){toast('kimi 生成失败/超时，改用本地模板');return}
+      if(!r){toast('kimi 生成失败');return}
+      if(r.error){toast('❌ '+r.error);return}
+      var txt=r.text;
       var m=txt.match(/\{[\s\S]*\}/);
       if(!m){toast('kimi 返回格式异常，改用本地模板');return}
       try{
@@ -2415,8 +2734,10 @@ function doQuickToForm(){
     if(!notice){toast('请先生成通告');return}
     var btn=this;btn.disabled=true;var oldText=btn.textContent;btn.textContent='kimi 补充中…';
     var prompt='下面是一份短视频拍摄通告：\n\n'+notice.slice(0,1500)+'\n\n请你作为资深导演，补充 3 条实用建议：\n1. 拍摄现场最容易掉链子的环节；\n2. 可以加一句什么台词让人物更立体；\n3. 一个镜头调度上的小建议。\n\n用中文，分 3 点，每点不超过 50 字，直接给建议不要说废话。';
-    callKimi(prompt,{max_tokens:600,temperature:0.7}).then(function(txt){
+    callKimi(prompt,{max_tokens:600,temperature:0.7}).then(function(r){
       btn.disabled=false;btn.textContent=oldText;
+      if(r&&r.error){toast('❌ '+r.error);return}
+      var txt=r&&r.text;
       if(txt){
         var box=document.createElement('div');
         box.style.cssText='margin:16px 0;padding:14px;background:rgba(180,60,50,.06);border-left:3px solid #b43c32;font-size:14px;line-height:1.8;white-space:pre-wrap;';
