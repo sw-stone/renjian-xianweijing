@@ -339,8 +339,51 @@ footer b{color:var(--red2)}
   <main>
     <!-- ============ 壹 田野记录 ============ -->
     <section class="panel active" id="panel-field">
+      <!-- ===== 语音输入（讲述人物见闻，AI 自动拆 Q1~Q3） ===== -->
+      <div class="form-sheet" style="margin-bottom:18px;border-left:4px solid var(--red);">
+        <div class="sheet-head"><span>语音讲述 · VOICE NOTE</span><span class="mono">VOICE-02 / 浏览器原生识别</span></div>
+        <div class="form-body" style="padding:20px 24px;">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;">
+            <button class="btn primary" id="btn-voice-start">🎙 开始讲述</button>
+            <button class="btn" id="btn-voice-stop" disabled>◼ 停止</button>
+            <span id="voice-status" style="font-size:13px;color:#666;letter-spacing:1px;">点击开始，用 1 分钟讲一个你亲眼见过的人</span>
+          </div>
+          <textarea id="voice-transcript" placeholder="识别中的文字会实时出现在这里……&#10;&#10;提示：普通话讲、慢一点、句子之间略作停顿。可以多次开始/停止，文字会接着续写。" style="width:100%;min-height:120px;padding:12px 14px;font-size:15px;border:1.5px solid var(--ink);border-radius:0;font-family:inherit;background:var(--card);resize:vertical;line-height:1.7;"></textarea>
+          <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+            <button class="btn primary" id="btn-voice-split" disabled>✂ 智能拆分到 Q1-Q3 →</button>
+            <button class="btn" id="btn-voice-split-kimi" disabled title="本地拆不准时，让 kimi-k2.7-code 拆">✨ AI 拆分（kimi）</button>
+            <button class="btn" id="btn-voice-copy-prompt" title="复制一段提示词，粘到 opencode 让 AI 拆">📋 复制拆分提示词</button>
+            <button class="btn" id="btn-voice-clear">清空</button>
+          </div>
+          <div class="hint" style="margin-top:10px;">流程：<b>① 点"开始讲述"</b>用语音讲人物 → <b>② 停止后点"智能拆分"</b>，自动解析 Q1 人物 / Q2 场景 / Q3 细节填进下方表单 → <b>③ 你勾选 Q4-Q7</b> → 开始田野调查。<br>拆分逻辑可用本页规则（本地）或 opencode AI（更准）。</div>
+        </div>
+
+        <!-- 从 opencode 粘回拆解结果的接收区 -->
+        <div id="voice-import-zone" style="display:none;border-top:1px dashed var(--rule, #d9d4c7);padding:16px 24px;">
+          <label style="font-size:12.5px;letter-spacing:1.5px;color:var(--red);display:block;margin-bottom:8px;">📥 从 opencode 贴入拆解结果（支持 JSON 或 三段式）</label>
+          <textarea id="voice-import" placeholder='支持 JSON 格式：{"person":"...","scene":"...","detail":"..."}&#10;也支持三段式文本：人物：xxx&#10;场景：xxx&#10;细节：xxx' style="width:100%;min-height:80px;padding:10px 12px;font-family:monospace;font-size:13px;border:1px solid var(--ink);background:#fffef8;resize:vertical;"></textarea>
+          <div style="margin-top:8px;display:flex;gap:10px;">
+            <button class="btn small primary" id="btn-voice-import-apply">应用到表单</button>
+            <button class="btn small" id="btn-voice-import-cancel">取消</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 一句话快记（现场演示 / 快速记录通道） ===== -->
+      <div class="form-sheet" style="margin-bottom:18px;border-left:4px solid var(--red);">
+        <div class="sheet-head"><span>一句话快记 · QUICK NOTE</span><span class="mono">FAST-01 / 现场演示专用</span></div>
+        <div class="form-body" style="padding:20px 24px;">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start;">
+            <input type="text" id="f-quick" placeholder="职业 + 亲眼细节，例：「菜市场卖鱼大姐 嘴上说卖完了 手已经把鱼装袋」" style="flex:1;min-width:280px;padding:12px 14px;font-size:15px;border:1.5px solid var(--ink);border-radius:0;font-family:inherit;background:var(--card);">
+            <button class="btn primary" id="btn-quick">快记 → 出卡</button>
+            <button class="btn" id="btn-quick-to-form" title="把这句话拆开填进下方完整表单">拆开填表 ↓</button>
+          </div>
+          <div class="hint" style="margin-top:10px;">快记直接出简版卡（3 细节 + 1 反差 + 3 风险提醒），适合现场/灵感记录；完整田野调查走下方 7 题表单。下方表单仍支持草稿持久化与精确控制。</div>
+        </div>
+      </div>
+
       <div class="form-sheet">
-        <div class="sheet-head"><span>田野记录单 · OBSERVATION INTAKE</span><span class="mono">FORM RJ-01 / 本地生成 / 不依赖网络</span></div>
+        <div class="sheet-head"><span>完整田野记录单 · OBSERVATION INTAKE</span><span class="mono">FORM RJ-01 / 本地生成 / 不依赖网络</span></div>
         <div class="form-body">
           <div class="form-grid">
             <div class="field">
@@ -385,9 +428,35 @@ footer b{color:var(--red2)}
               <select id="f-tpl"></select>
               <div class="tpl-hint" id="tpl-hint"></div>
             </div>
+            <div class="field wide">
+              <label class="check-line" style="cursor:pointer;">
+                <input type="checkbox" id="f-online">
+                <span>🌐 启用联网调研模式（赛前需自配 Tavily API Key；<b>现场演示请保持关闭，走本地档案库</b>）</span>
+              </label>
+              <div id="online-config" style="display:none;margin-top:8px;padding:12px;background:rgba(0,0,0,.03);border-left:2px solid var(--red);font-size:13px;">
+                <label style="font-size:12.5px;display:block;margin-bottom:6px;letter-spacing:1px;">TAVILY API KEY（仅本机保存，不上传）</label>
+                <input type="password" id="f-tavily-key" placeholder="tvly-..." style="width:100%;padding:8px 10px;border:1px solid var(--ink);font-family:monospace;font-size:13px;background:var(--card);">
+                <div style="margin-top:6px;color:var(--ink-soft,#666);font-size:12.5px;line-height:1.6;">开启后，生成档案前会按你的"人物+细节"关键词抓取 3–5 条真实资料注入素材池；失败/超时自动降级本地档案库。<a href="https://tavily.com/" target="_blank" rel="noopener" style="color:var(--red);">申请免费 Key →</a></div>
+              </div>
+            </div>
+
+            <div class="field wide">
+              <label class="check-line" style="cursor:pointer;">
+                <input type="checkbox" id="f-use-kimi">
+                <span>🤖 启用 <b>kimi-k2.7-code</b> 大模型（词元跳动·可选。开启后点「✨ AI」按钮可让 kimi 生成/补充档案）</span>
+              </label>
+              <div id="kimi-config" style="display:none;margin-top:8px;padding:12px;background:rgba(180,60,50,.06);border-left:2px solid #b43c32;font-size:13px;">
+                <label style="font-size:12.5px;display:block;margin-bottom:6px;letter-spacing:1px;">TOKENDANCE API KEY（Bearer token，仅本机保存）</label>
+                <input type="password" id="f-kimi-key" placeholder="sk-..." style="width:100%;padding:8px 10px;border:1px solid var(--ink);font-family:monospace;font-size:13px;background:var(--card);">
+                <label style="font-size:12.5px;display:block;margin:10px 0 6px;letter-spacing:1px;">模型名（默认 kimi-k2.7-code）</label>
+                <input type="text" id="f-kimi-model" placeholder="kimi-k2.7-code" style="width:100%;padding:8px 10px;border:1px solid var(--ink);font-family:monospace;font-size:13px;background:var(--card);">
+                <div style="margin-top:6px;color:var(--ink-soft,#666);font-size:12.5px;line-height:1.6;">API 端点：<code>https://api.tokendance.space/v1/chat/completions</code>（OpenAI 兼容）。<a href="https://tokendance.space/models/kimi-k2.7-code" target="_blank" rel="noopener" style="color:var(--red);">看模型详情 →</a></div>
+              </div>
+            </div>
           </div>
           <div class="form-actions">
             <button class="btn primary" id="btn-submit">开始田野调查 →</button>
+            <button class="btn" id="btn-submit-kimi" title="让 kimi-k2.7-code 直接生成完整 12 节档案（需要填 Kimi Key）">✨ 用 kimi 生成档案</button>
             <button class="btn" id="btn-example">载入示例档案</button>
             <button class="btn" id="btn-next-sit">换一个情境</button>
             <button class="btn" id="btn-reset-form">清空重置</button>
@@ -435,6 +504,7 @@ footer b{color:var(--red2)}
           <button class="btn small primary" id="btn-print">打印通告</button>
           <button class="btn small" id="btn-copy-md">复制为 Markdown</button>
           <button class="btn small" id="btn-compact">手机简版视图</button>
+          <button class="btn small" id="btn-kimi-enrich" title="让 kimi 补充拍摄建议（台词/镜头/机位）">✨ 让 kimi 补充</button>
           <label class="switch-line"><input type="checkbox" id="ck-solo">单人创作者简化模式</label>
           <span class="spacer"></span>
           <button class="btn small" id="btn-notice-reset">重新生成</button>
@@ -922,7 +992,8 @@ function readForm(){
     duration:+$('#f-duration').value,
     cast:+$('#f-cast').value,
     brand:$('#f-brand').checked,
-    tpl:$('#f-tpl').value
+    tpl:$('#f-tpl').value,
+    online:$('#f-online')?$('#f-online').checked:false
   };
 }
 function writeForm(f){
@@ -930,6 +1001,10 @@ function writeForm(f){
   $('#f-detail').value=f.detail||''; $('#f-duration').value=String(f.duration||60);
   $('#f-cast').value=String(f.cast||2); $('#f-brand').checked=!!f.brand;
   if(tplById(f.tpl)) $('#f-tpl').value=f.tpl;
+  if($('#f-online')){
+    $('#f-online').checked=!!f.online;
+    $('#online-config').style.display=f.online?'block':'none';
+  }
   updateTplHint(); saveFormDraft();
 }
 function saveFormDraft(){lsSet(LS_FORM,readForm())}
@@ -987,12 +1062,178 @@ function buildShots(f,sitIdx,demo){
 
 /* ---------- 职业关键词档案池（genericDossier 增强用） ---------- */
 var JOB_POOLS=[
+ {kw:['千问','qwen','通义','ai办公','办公产品经理'],job:'办公 AI 产品经理',
+  lang:[
+   '三句不离「场景」：「这个场景我们考虑过」——"场景"是他的防弹衣，也是他的遮羞布。',
+   '把用户翻译成数据：「留存模型不允许我们这么做」——把"不想做"变成"科学不许"。',
+   '把功能翻译成价值：「这不是一个按钮，这是一种工作方式」——所有按钮都是工作方式。',
+   '对老板说"对标 ChatGPT"，对用户说"更懂中文"，对同事说"先跑通 MVP"——同一件事三套话。',
+   '被挑战时下意识引用抽象概念：「长期价值」「生态位」「心智」——抽象是产品经理的护城河。'],
+  act:[
+   '演示 Demo 前，先在四个设备上各跑一遍——第五台手机藏在西装内袋。',
+   '被问技术问题时，下意识把激光笔指向 PPT 最安全的图表页。',
+   '听到"这功能 ChatGPT 也有"时，左手拇指在桌下疯狂按动。',
+   '路演结束后不是去喝水，是冲到最后一排看自己刚才的录像回放。',
+   '在群里有同行在场时，他打字会用全角标点——显得"更严谨"。'],
+  prop:[
+   '一台永远连着三个充电宝的工程机——真正的"生产环境"。',
+   '翻页笔 + 备用翻页笔 + 备用的备用翻页笔。',
+   '保温杯里是美式，杯身上贴着"Talk is cheap"的贴纸（被磨掉了一半）。',
+   '一本封皮写着"Vibe Coding 实践"的笔记本——内页只有前 10 页有字。'],
+  desire:'被承认为"懂 AI 的人"，而不是"做 PPT 的人"。他最怕的不是产品翻车，是台下某个程序员用一句真技术问题把他问倒——那一刻他准备的所有"场景""生态""心智"，都要裸奔。'},
+ {kw:['卖鱼','鱼贩','水产','鱼摊'],job:'水产摊贩',
+  lang:[
+   '拒绝式招呼：「卖完了卖完了」——老熟人走近时的第一反应，试探急不急。',
+   '让利式仪式：「最后一条，便宜拿走」——装袋同时说，完成人情交接。',
+   '跳过成交：不问"要吗"，直接问"剖开还是整条"。',
+   '责任外推：「下次早点来」——收钱后说，把责任推给时间不给人情。',
+   '报价带零头再抹：「十八，给十五」——抹零是她的年度分红。'],
+  act:[
+   '嘴上拒绝的同时，手已扯袋装鱼——拒绝是话术，服务是本能。',
+   '抓鱼前先用围裙擦手——给熟客的体面。',
+   '称重时先用身体挡住秤屏一角再让开——先控预期再给惊喜。',
+   '送葱塞袋底不塞面上——好处藏着给。',
+   '找零硬币拍在案板不递手——忙，但零钱永远备好。'],
+  prop:[
+   '一件洗到发白但每天必穿的胶皮围裙——她的职业皮肤。',
+   '一把磨到极快的刮鳞刀——出场即专业。',
+   '一沓叠得整整齐齐的红色塑料袋——多套一层是多给面子。'],
+  desire:'被老顾客指名——"这条街离不开她"。她对生客精明、对熟客嘴硬，差别的那部分就是她的社交货币。'},
+ {kw:['班主任','中学校长','毕业班'],job:'毕业班班主任',
+  lang:[
+   '反向认出：「你哪个班的？」——明明一眼认出，偏要问这一句。',
+   '用指令代寒暄：「坐，别挡门口。」',
+   '压缩式提问：「现在干什么工作？」——问句永远比答案短。',
+   '先贬后夸：「你们那届一般。」——夸人先贬届。',
+   '情绪急刹：「行了行了。」——防止自己多说。'],
+  act:[
+   '开抽屉的钥匙转两圈才拉——珍藏且有序，合影在最里层。',
+   '递粉笔头给学生留念——他从不当面说什么。',
+   '看人从眼镜框上方看，不推镜。',
+   '指腹擦合影边角——不擦正面。',
+   '学生起身他先看表——掩饰不舍。'],
+  prop:[
+   '一叠背面写好届别的全班合影——他的情感锚点。',
+   '一盒写剩的粉笔头——都是信物。',
+   '一只磨白的搪瓷杯——讲台的寿命。'],
+  desire:'被学生知道他记得。他不是要学生感谢，是要学生知道——"我记得你"这件事，他做了一辈子，没人看见过。'},
+ {kw:['安检','地铁','安检员','闸机'],job:'地铁安检员',
+  lang:[
+   '念规定，音调平：「包过机，人人一样。」',
+   '递物时的轻语：「拿好拿好。」——快而轻，几乎听不见。',
+   '先问再加速：「赶几点的？」',
+   '放行后的收尾：「下次早点。」',
+   '对讲机和对乘客是两套声区。'],
+  act:[
+   '嘴里念规定的同时，手已经托住了咖啡——规定防事，手防人心凉。',
+   '帮抬婴儿车时不看家长看车——只对这个任务负责。',
+   '手探仪横拿不指人——权力当工具用。',
+   '递身份证用双手拇指推——尊重放在动作里。',
+   '站姿微侧，给跑动的人留道。'],
+  prop:[
+   '一支手探仪——他当工具用，不当权杖用。',
+   '机台左角一个保温杯——轮岗里"家"的坐标。',
+   '一副白手套——一天换两次，脏了先藏。'],
+  desire:'被当作"一个人"，而不是闸机的一部分。他不期待感谢，只想在"人人一样"里被多看一眼。'},
+ {kw:['主播','带货','直播'],job:'直播带货主播',
+  lang:[
+   '下播咒语：「家人们再见」——全天的音量顶点。',
+   '下播后对助理的话只剩单词：「水。」「灯。」「回放。」',
+   '职业高音区：「上链接」——三个字一个音高。',
+   '私下语句不超过五个字。',
+   '对家人的电话声音反而最软。'],
+  act:[
+   '说再见的同时，手已伸向补光灯开关——热情是开关不是性格。',
+   '下播先摘耳机再喝水，顺序永远不变。',
+   '声音降八度是同一句话之内完成的——不需要过渡。',
+   '回放只看两倍速——她没耐心听自己讲话。',
+   '桌下藏一双旧拖鞋——镜头外的那只脚才是她。'],
+  prop:[
+   '一个泡着胖大海的保温杯——嗓子是吃饭的家伙。',
+   '一块贴满手写价格的提词板——记忆的外挂。',
+   '一件下播立刻披上的旧外套——切换回自己的仪式。'],
+  desire:'安静，和不用大声证明自己。镜头的热度她在下播那一秒就还回去了。'},
+ {kw:['修表','表匠','钟表','手表'],job:'修表匠',
+  lang:[
+   '万能推拒：「修不动了」——回答一切询问。',
+   '劝人守时：「表不等人」——自己的挂钟慢十分钟。',
+   '报价只讲工时：「这个要坐一下午。」',
+   '嘴推手接：「放这儿吧。」',
+   '夸表不讲人情：永远具体到某个零件。'],
+  act:[
+   '用擦放大镜代替告别——手停不下来，用仪式拖延告别。',
+   '拆迁通知折成小方块压在玻璃板下——和挂钟放在一起。',
+   '镊子按型号排，用完必归位。',
+   '听走时用指尖不用工具——五十年的肌肉记忆。',
+   '满墙挂钟全部拨快一分钟——只许自己"迟到"。'],
+  prop:[
+   '一只戴了四十年的眼罩式放大镜——身体的延伸。',
+   '一排镊子，从粗到细——五十年的秩序物证。',
+   '一盒子没人来取的旧表——未完成的告别。'],
+  desire:'还有人把坏表送来。他要证明的不是手艺值钱，是"还有用"。'},
+ {kw:['传统企业','老板','厂长','集团','董事长'],job:'传统行业老板',
+  lang:[
+   '忆苦式开场：「我们当年创业的时候……」——所有问题都能拉回二十年前。',
+   '把新概念翻译成车间语言：「这个『私域流量』，是不是就是我们以前说的老客户？」',
+   '假装询问实际定调：「小李你说说看……嗯，我觉得还是……」',
+   '对技术名词礼貌过敏：「区块链那些我不懂，我就问一个事——能不能多卖货？」',
+   '表扬用过去式：「这个事小周做得还是不错的」——"的"字拉出一秒长的余韵。'],
+  act:[
+   '听汇报时左手一直转茶杯——转得越快代表越不同意。',
+   '说"我们敞开聊"的同时把西装扣子系上。',
+   '对新工具永远先问"多少钱、谁用过、坏了找谁"。',
+   '开会坐到第 40 分钟必然摸手机，但绝不会回任何消息——只是看时间。',
+   '办公室最显眼的位置摆着一张和某位领导的合影——相框比合影新很多。'],
+  prop:[
+   '一个从助理手里接过来的 iPad，壳子的皮已经翻边，但屏幕永远停在演示的首页。',
+   '一支别在西装翻领上的钢笔——更多时候他用的是手机备忘录。',
+   '一瓶办公室常备的速效救心丸（自己不承认需要）。',
+   '一面墙的书柜——书脊整齐得像刚出厂，只有一本《高效能人士的七个习惯》被翻旧了。'],
+  desire:'被当成"还能跟上时代的人"。他不在乎员工觉得他老派——他怕的是女儿在饭桌上听到他提"元宇宙"时那一刻的停顿。'},
+ {kw:['自媒体','导师','个人品牌','ip'],job:'个人品牌导师',
+  lang:[
+   '把一切都拆解成方法：「这个问题，其实我有一个公式」——他有 47 个公式。',
+   '用自己的故事做开头：「三年前我还只是个普通打工人」——这故事讲了 400 遍。',
+   '制造金句执念：「这句话大家可以截图发朋友圈」——直接告诉你要截图。',
+   '把常识重新命名：「这个叫『情绪颗粒度』」——换个词就是他的原创。',
+   '把付费包装成机会：「这堂课只开放给真正想改变的人」——门槛变成恩赐。'],
+  act:[
+   '说"真实最重要"的时候，桌上摆着三台补光灯。',
+   '讲课时习惯性摸耳垂——这是他练习过 200 遍的"亲和力动作"。',
+   '每次直播前先拍 30 秒"没准备好"的幕后——比正片剪得还细。',
+   '问"大家听懂了吗"时眼神扫的是镜头,不是人。',
+   '看到学员真的起来之后，第一反应是让对方把感谢写成小红书。'],
+  prop:[
+   '一个永远写着"日更"的手写白板——上一次更新是三个月前。',
+   '一台 iPad 用来给学员展示"数据截图"，截图的时间戳永远是同一天。',
+   '一杯冷掉的精品咖啡——是道具不是饮料，拍照用。',
+   '一本读了一半的《定位》——书签夹在自序页，已经快两年了。'],
+  desire:'他真的相信他讲的每一句方法论——但只在学员真的按这套做成了、并且感谢他的时候。那个瞬间比任何直播间的"下单"按钮都能支撑他。'},
+ {kw:['自由职业','松弛','个体户'],job:'标榜松弛感的自由职业者',
+  lang:[
+   '反努力叙事：「我最大的能力，是不卷。」——这句话他说给所有刚下班的朋友听。',
+   '把忙翻译成选择：「我不是忙，我只是在体验不同的可能。」',
+   '用模糊对抗数字：「收入嘛，够花。」——够花到他半夜三点还在改稿。',
+   '用"对了"开头插入新话题：「对了，你那个方案做完了吗」——他想聊的不是你那个方案。',
+   '自我感动式日程描述：「今天睡到自然醒，去了一家宝藏咖啡店」——自然醒是 6 点 20,宝藏咖啡店坐了 9 小时。'],
+  act:[
+   '朋友圈发"今日份松弛"，发完立刻切到接稿群抢单。',
+   '说"不接急稿"的同时给 5 个客户回复"马上"。',
+   '周末发的登山照，定位在离城市 30 分钟车程的"小山坡"。',
+   '见客户前要花 40 分钟搭配"看起来不像上班族"的衣服。',
+   '嘴上说"我不看收入数字"，月底还是默默打开了支付宝账单。'],
+  prop:[
+   '一个藤编的电脑包——里面是最高配的 MacBook Pro。',
+   '一本翻旧了的《倦怠社会》——他拿它来对抗倦怠的方式是更用力地工作。',
+   '一叠咖啡店集章卡——集齐了 7 家，但没有一家能写完一整篇稿。',
+   '一个写着"少即是多"的帆布包——里面装了日程本、iPad、充电器、备用电池、创可贴、胃药。'],
+  desire:'被人认为"活得很松弛"。这份"松弛"花掉他每天 14 个小时维护——但他不打算让任何人知道。'},
  {kw:['外卖','骑手','配送','快递'],job:'户外配送者',
   lang:['时间就是钱的语言体系：「还有五单」——他的时钟以单为单位。','道歉先于解释：「不好意思让您久等」——说完已经冲向下个门栋。','导航黑话：「这个小区进不去车」——每个"进不去"背后都有三条私藏路线。','对电话那头切换温柔模式：「马上到，先吃饭」——配送箱里装着别人的饭，电话里是自己的家。'],
   act:['等电梯时永远站在最外侧——方便第一个冲出去。','取餐时手指无意识敲保温箱——节拍器是接单提示音。','红灯前 0.5 秒的身体前倾——系统在替他做决定。'],
   prop:['贴满胶带的保温箱——胶带层数=服役年限。','两部手机一部专门接单——屏幕碎但闹钟永远最响。','鞋帮开裂的运动鞋——他给车换过三次胎，没给自己换过鞋。'],
   desire:'被当作"一个人"而不是"一个运力"。他想要的不是差评比五星多，是某天敲门时客户说"又是你啊"。'},
- {kw:['教师','老师','班主任'],job:'教师',
+ {kw:['教师','老师','辅导员','大学教授'],job:'教师',
   lang:['课堂管理式口头禅：「我等你们安静」——他永远比闹钟先到，比铃声后走。','对家长自动切换汇报语气：「孩子最近状态不错」——"不错"的梯度有七级。','放学后的真话只在办公室出现，音量比课堂低一半。'],
   act:['批改作业用三种颜色的笔——红色只在最重要的地方出现。','课间十分钟站在教室后门——不出声，只是出现。','听到上课铃的瞬间，肩膀先于表情进入状态。'],
   prop:['红笔永远比黑笔先用完。','保温杯里泡着胖大海——讲台是他的战场。','一本写满学生名字的点名册——每个名字后面都有只有他懂的记号。'],
@@ -1007,11 +1248,6 @@ var JOB_POOLS=[
   act:['说"没问题"时已经在心里跑了三遍代码。','键盘敲击声突然停止=遇到真问题的信号。','屏幕共享前 0.5 秒的窗口大扫除。'],
   prop:['机械键盘的常用键磨损发亮——键盘就是他的指纹。','工位上的技术书籍——翻开的那本永远停在第二章。','同一件"幸运卫衣"——重要发布日的战袍。'],
   desire:'被承认为"创造者"而不是"修电脑的"。他想要的不是加薪，是产品上线时有人知道那行核心代码是谁写的。'},
- {kw:['直播','主播','带货'],job:'主播',
-  lang:['能量守恒话术：「家人们」——下播后的音量是直播间的三分之一。','紧迫感制造术：「最后三单」——这三单可以持续三十分钟。','对镜头和对助理是两个人——切换发生在一秒之内。'],
-  act:['试吃/试用前的 0.5 秒表情管理——镜头是他的镜子也是他的牢笼。','中场休息 30 秒回復体力的姿势精确到度。','下播后不说话，让声带冷却——职业病是沉默。'],
-  prop:['补光灯下被烤化的口红/护肤品。','声卡和它永远缠着的线——他的乐器。','提词板——写满"记得笑"不只是提醒表情。'],
-  desire:'被承认为"专业的内容人"而不是"带货的"。她想下播后还有人记得她讲过什么，而不只是卖过什么。'},
  {kw:['保洁','环卫','清洁'],job:'城市清洁者',
   lang:['对自己负责的区域用"我的"——"我的这段路"是她全部的领地感。','对乱丢垃圾者不骂，只是叹气——叹气比骂省力气。','清晨的问候只给早起的人：「早」——一个字，用了一辈子。'],
   act:['工具摆放的角度全局统一——扫帚队列是她的仪仗队。','看到别人扫过的地会下意识补两下——不是比较，是本能。','口袋里的手套永远比手上的新——她在攒"过年穿"。'],
@@ -1234,6 +1470,40 @@ function renderDossier(){
       if(selectedSit>=0) toast('已采用情境 '+String.fromCharCode(65+selectedSit)+'，可生成拍摄通告');
     };
   });
+}
+
+/* kimi 生成的 12 节档案 · 简化渲染（保留与本地档案兼容的数据结构） */
+function renderKimiDossier(kd, f){
+  /* 把 kimi 的 JSON 转成与本地 dossier 兼容的结构 */
+  var d={
+    def:kd.identity||'（kimi 生成）',
+    identity:{
+      outer:kd.identity?[kd.identity]:[],
+      inner:(kd.desire&&(kd.desire.overt+' / '+kd.desire.covert))||''
+    },
+    lang:(kd.language||[]).map(function(x){return x.line+'（'+x.when+'）'}),
+    act:(kd.microactions||[]).map(function(x){return x.action+'（'+x.reveals+'）'}),
+    prop:(kd.props||[]).map(function(x){return x.item+'（'+x.function+'）'}),
+    contrast:(kd.contrasts||[]).map(function(x,i){return {say:x.say,do:x.do,key:(i===0)}}),
+    situations:(kd.situations||[]).map(function(s){
+      return {type:s.type,title:s.type+' · kimi 生成',story:s.story,beats:'',shoot:''}
+    }),
+    shots:(kd.shots||[]).map(function(s){return s.time+' '+s.shot}),
+    risks:kd.risks||{empathy:3,comprehension:3,harm:3,fix:'待人工评审'},
+    checklist:(kd.checklist||[]),
+    form:f,
+    tpl:{name:'kimi-k2.7-code · AI 生成'},
+    situationsChosenIndex:-1
+  };
+  /* 直接复用本地的渲染流程 */
+  dossier=d;
+  selectedSit=-1;
+  renderDossier();
+  /* 把生成方式提示改成 kimi 版 */
+  setTimeout(function(){
+    var notes=document.querySelectorAll('#dossier-body .note');
+    if(notes[0])notes[0].innerHTML='批注：本档案由 <b>kimi-k2.7-code（词元跳动）</b> 生成 · 基于你的田野记录展开 · 未经核实的部分请勿直接当真';
+  },50);
 }
 
 /* ---------- 通告 ---------- */
@@ -1541,11 +1811,408 @@ function resetAll(){
   go('field');toast('已重置，档案与通告已清空');
 }
 
+/* ---------- LLM 调用：词元跳动 kimi-k2.7-code（可选） ---------- */
+/* OpenAI 兼容 /chat/completions；返回 Promise，失败 resolve(null) */
+var KIMI_BASE='https://api.tokendance.space/v1';
+var KIMI_MODEL_DEFAULT='kimi-k2.7-code';
+function callKimi(prompt, opts){
+  opts=opts||{};
+  return new Promise(function(resolve){
+    var key=(localStorage.getItem('rj_kimi_key')||'').trim();
+    if(!key){resolve(null);return}
+    var model=(localStorage.getItem('rj_kimi_model')||KIMI_MODEL_DEFAULT).trim()||KIMI_MODEL_DEFAULT;
+    var timeout=opts.timeout||25000;
+    var timer=setTimeout(function(){resolve(null)}, timeout);
+    fetch(KIMI_BASE+'/chat/completions',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+key
+      },
+      body:JSON.stringify({
+        model:model,
+        messages:(opts.system?[{role:'system',content:opts.system}]:[]).concat([{role:'user',content:prompt}]),
+        temperature:opts.temperature==null?0.7:opts.temperature,
+        max_tokens:opts.max_tokens||2000
+      })
+    }).then(function(r){
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return r.json()
+    }).then(function(data){
+      clearTimeout(timer);
+      var txt=data&&data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
+      resolve(txt?String(txt).trim():null);
+    }).catch(function(e){
+      clearTimeout(timer);
+      console.warn('kimi 调用失败',e);
+      resolve(null);
+    });
+  });
+}
+/* kimi 拆分口述：输入 transcript，返回 {person, scene, detail} 或 null */
+function kimiSplitVoice(text){
+  var prompt='把下面这段口述拆解成三段，严格输出 JSON，不要多余文字。\n\n'+
+    '输出格式（严格）：\n{"person":"...","scene":"...","detail":"..."}\n\n'+
+    '要求：\n- person：人物职业/身份，12 字内\n- scene：具体场景，20 字内\n- detail：完整保留"嘴上说X，做Y"的对位关系，60 字内\n\n'+
+    '口述：「'+text+'」';
+  return callKimi(prompt,{max_tokens:500,temperature:0.3}).then(function(txt){
+    if(!txt)return null;
+    /* 提取 JSON */
+    var m=txt.match(/\{[\s\S]*\}/);
+    if(!m)return null;
+    try{
+      var o=JSON.parse(m[0]);
+      if(o.person&&o.scene&&o.detail)return o;
+      return null;
+    }catch(e){return null}
+  });
+}
+
+/* ---------- 联网搜索：Tavily（可选，默认关闭） ---------- */
+/* 返回 Promise，失败时 resolve(null) —— 永远优雅降级本地库 */
+function tavilySearch(query, key){
+  return new Promise(function(resolve){
+    if(!key){resolve(null);return}
+    var timer=setTimeout(function(){resolve(null)}, 6000); /* 6s 超时 */
+    fetch('https://api.tavily.com/search',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        api_key:key,
+        query:query,
+        max_results:5,
+        search_depth:'basic',
+        include_answer:false
+      })
+    }).then(function(r){return r.json()}).then(function(data){
+      clearTimeout(timer);
+      if(!data||!data.results){resolve(null);return}
+      var snippets=data.results.map(function(r){return (r.title||'')+' — '+(r.content||'')}).filter(Boolean);
+      resolve(snippets.length?snippets:null);
+    }).catch(function(){clearTimeout(timer);resolve(null)});
+  });
+}
+/* 把搜索到的真实观察片段注入到 POOLS（会改变当前会话的取样分布，但不写盘） */
+function injectOnlineSnippets(snippets, form){
+  if(!snippets||!snippets.length)return 0;
+  var added=0;
+  snippets.forEach(function(s){
+    /* 只保留看起来像"细节观察"的片段（包含"说/做/总/经常"等动词性词） */
+    if(/说|做|总|经常|习惯|每次|爱|喜欢|会|从|都|嘴/.test(s)){
+      POOLS.common.push('【网络调研】'+s.slice(0,120));added++;
+    }
+  });
+  return added;
+}
+
+/* ---------- 语音输入（Web Speech API） ---------- */
+var voiceRecog=null, voiceActive=false;
+function voiceIsSupported(){
+  return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+}
+function voiceInit(){
+  if(!voiceIsSupported())return null;
+  var Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var r = new Ctor();
+  r.lang='zh-CN';
+  r.continuous=true;         /* 持续识别 */
+  r.interimResults=true;     /* 实时中间结果 */
+  r.maxAlternatives=1;
+  return r;
+}
+function voiceSetStatus(txt, isErr){
+  var s=$('#voice-status');
+  s.textContent=txt;
+  s.style.color=isErr?'#c0392b':'#666';
+}
+function voiceStart(){
+  if(!voiceIsSupported()){
+    voiceSetStatus('当前浏览器不支持语音识别，请用 Chrome / Edge', true);
+    toast('请换 Chrome / Edge 浏览器用语音功能');
+    return;
+  }
+  if(voiceActive)return;
+  try{
+    voiceRecog=voiceInit();
+    if(!voiceRecog){voiceSetStatus('初始化失败', true);return}
+    var finalText=$('#voice-transcript').value;
+    voiceRecog.onstart=function(){
+      voiceActive=true;
+      $('#btn-voice-start').disabled=true;
+      $('#btn-voice-stop').disabled=false;
+      $('#btn-voice-split').disabled=true;
+      voiceSetStatus('🎙 正在聆听…讲完后点"停止"');
+    };
+    voiceRecog.onerror=function(e){
+      var msg={
+        'not-allowed':'❌ 麦克风权限被拒。请在地址栏左侧允许麦克风访问',
+        'no-speech':'⚠ 没有听到声音，请再靠近一点',
+        'audio-capture':'❌ 找不到麦克风',
+        'network':'❌ 网络错误（语音识别需要联网）',
+        'aborted':'已取消'
+      }[e.error]||('错误：'+e.error);
+      voiceSetStatus(msg, true);
+      voiceActive=false;
+      $('#btn-voice-start').disabled=false;
+      $('#btn-voice-stop').disabled=true;
+    };
+    voiceRecog.onend=function(){
+      voiceActive=false;
+      $('#btn-voice-start').disabled=false;
+      $('#btn-voice-stop').disabled=true;
+      var hasContent=$('#voice-transcript').value.trim().length>0;
+      $('#btn-voice-split').disabled=!hasContent;
+      if(hasContent)voiceSetStatus('✓ 已停止，共 '+$('#voice-transcript').value.length+' 字，可以拆分了');
+      else voiceSetStatus('已停止，但没有识别到内容');
+    };
+    voiceRecog.onresult=function(e){
+      var interim='';
+      for(var i=e.resultIndex;i<e.results.length;i++){
+        var r=e.results[i];
+        if(r.isFinal)finalText+=r[0].transcript;
+        else interim+=r[0].transcript;
+      }
+      $('#voice-transcript').value=finalText+(interim?(' '+interim):'');
+      /* 自动滚动到底部 */
+      $('#voice-transcript').scrollTop=$('#voice-transcript').scrollHeight;
+    };
+    voiceRecog.start();
+  }catch(err){
+    voiceSetStatus('启动失败：'+err.message, true);
+  }
+}
+function voiceStop(){
+  if(voiceRecog&&voiceActive){voiceRecog.stop()}
+}
+function voiceClear(){
+  $('#voice-transcript').value='';
+  $('#btn-voice-split').disabled=true;
+  voiceSetStatus('点击开始，用 1 分钟讲一个你亲眼见过的人');
+}
+
+/* 从 transcript 本地规则拆解 Q1/Q2/Q3（快但不准） */
+function voiceSplitLocal(text){
+  text=(text||'').trim();
+  if(!text)return null;
+
+  /* === 拆 Q3 细节：最关键是找"嘴上说X，手Y"的对位 === */
+  var detail='';
+  /* 模式1：完整对位 - 嘴上说/他说...，手/手上/抽屉/口袋/某个"实体部位或身体动作"
+     关键：把「转折词」和「身体位置」都包进捕获组，避免 undefined 拼接 */
+  var m=text.match(/(?:嘴上说|嘴上|他说|她说|总说|一直说|不断说|常说|还在说|在说)[「『"“]?([^」』"”，。,.]{2,30}?)[」』"”]?\s*[，,。.\s]*((?:但(?:是)?|同时|然而|可是|可|却|而|而且|并且|一边)?\s*(?:手上|手里|手下|手指|拇指|掌心|拳头|胳膊|肩|背|身体|眼睛|眼神|目光|腿|脚|膝盖|抽屉|口袋|兜|包里|柜子|盒子|本子|桌上|桌下|笔记本|心里|眉头|嘴角|脸上|额头|动作|语气|声音|音调|手)[^，。,.]{1,50})/);
+  if(m){
+    detail='嘴上说「'+m[1]+'」，'+m[2].trim();
+  }
+  /* 模式1.5：「嘴上说X」+ 后面有「还藏着/还留着/却/但」的对位 */
+  if(!detail){
+    var m15=text.match(/(?:嘴上说|嘴上|他?说|她?说)[「『"“]?([^」』"”，。,.]{2,30}?)[」』"”]?[，,。.\s]*(?:但|但是|然而|可是|却|而|还|同时|一边|另一边|另外)?(?:还|仍然|依然|却|也|又)?([藏留放存压垫卷折藏捏握抓拿托举][^，。,.]{2,50})/);
+    if(m15){detail='嘴上说「'+m15[1]+'」，'+m15[2]}
+  }
+  /* 模式2：「说X做Y」 */
+  if(!detail){
+    var m2=text.match(/(?:说|讲|念|喊)[「『"“]([^」』"”]{2,30})[」』"”][，,。.\s]*(?:但(是)?|同时|然而|可是|可|却|一边)?(?:又|还|同时|一边)?((?:做|干|帮|伸|递|抢|藏|捂|挡|压|按|举|抓|挑|捡|塞|递|撕|摸|推|拉|抱|背|提|抬|擦|抹|涂|写|画|撕|拆|装|摆|合|托|顶|捂|攥|捏|揉|搓|敲|拍|甩|抡|挥|扬)[^，。,.]{2,30})/);
+    if(m2){detail='嘴上说「'+m2[1]+'」，'+m2[3]}
+  }
+  /* 模式3：声音/语气对位（直播、演讲类常见） */
+  if(!detail){
+    var m25=text.match(/(?:嘴上说|嘴上|他?说|她?说)[「『"“]?([^」』"”，。,.]{2,30}?)[」』"”][，,。.\s]*(?:但|但是|然而|可是|却|而|同时)?[^，。,.]{0,10}?(声音|音调|语气|语调|语速|表情|眼神|动作)[^，。,.]{0,10}([^，。,.]{2,30})/);
+    if(m25){detail='嘴上说「'+m25[1]+'」，'+m25[2]+m25[3]}
+  }
+  /* 模式4：找「嘴上」「手」关键词所在的整句 */
+  if(!detail){
+    var m3=text.match(/[。，]?([^。]{0,80}?(?:嘴上|手|手却|眼睛|眼神|身体|心里|表情|抽屉|口袋|语气|声音)[^。]{0,80}?)[。，]/);
+    if(m3){detail=m3[1]}
+  }
+  /* 最终兜底：截取前 80 字 */
+  if(!detail)detail=text.slice(0,80);
+
+  /* === 拆 Q1 人物：抓职业关键词 === */
+  var person='';
+  /* 排除"最后一家""我见过一个"这类前缀污染 */
+  var cleanedText=text
+    .replace(/^(我见过|我遇到|我认识|我听说|我看到|我了解到|我知道|我接触|我采访|我观察|说一个|讲一个|聊一个|谈一个|说说|讲讲|聊聊|谈谈)[，。\s]*/,'')
+    .replace(/一个|一位|那个|这名|这|那种|那些|名|位(?=[\u4e00-\u9fa5])/g,'');
+  var personPatterns=[
+    /([\u4e00-\u9fa5a-zA-Z]{2,14}?(?:姐|哥|弟|妹|叔|姨|婶|爷|奶|师|员|工|长|官|生|总|监|家|翁|妈|爸|老板|老板娘|掌柜|摊主|师傅|主任|经理|总裁|辅导员|班主任|医生|护士|保安|保洁|安检员|骑手|快递员|外卖员|主播|导师|产品经理|程序员|设计师|销售|司机|厨子|厨师|理发师|修鞋匠|修表匠|花匠|园丁|售票员|收费员|图书管理员|讲解员|导游|教练|裁判|志愿者|社工|调解员|仲裁员|公证员|拍卖师|品酒师|心理咨询师|律师|法官|警察|消防员|空姐|乘务员|列车员|播音员|配音员|主持人|记者|编辑|搬运工|装卸工|矿工|农民工|泥瓦匠|木工|水电工|管道工|油漆工|裁缝|陶艺|鞋匠|锁匠|皮匠|打铁|补锅|磨刀|修伞|修锁|修鞋|修车|修表))/,
+    /([\u4e00-\u9fa5]{2,}?(?:AI|互联网|大厂|外企|国企|央企|民企|创业|自由职业|传统行业|体制)[\u4e00-\u9fa5]{0,10}?)/
+  ];
+  for(var i=0;i<personPatterns.length;i++){
+    var pm=cleanedText.match(personPatterns[i]);
+    if(pm){
+      var cand=pm[1];
+      /* 进一步清理：去除"最后一家""某个"等定语 */
+      cand=cand.replace(/^(最后|一家|一家|某个|某|这个|那个|一位|一名|见过|遇到)/,'');
+      if(cand.length>=3&&cand.length<=15){person=cand;break}
+    }
+  }
+  if(!person){
+    person=cleanedText.slice(0,12);
+  }
+
+  /* === 拆 Q2 场景：找时间/地点词，组合成短句 === */
+  var scene='';
+  var placeMatch=text.match(/(菜场|菜市场|早市|夜市|鱼摊|肉摊|菜摊|早餐摊|早餐店|包子铺|油条铺|烧烤摊|小吃街|学校|教室|讲台|办公室|会议室|工位|格子间|车间|厂房|工地|码头|车站|机场|地铁|地铁站|公交车|出租车|滴滴|高铁|火车|飞机|餐厅|饭馆|食堂|酒店|宾馆|民宿|医院|诊所|急诊|急诊室|银行|邮局|派出所|公安局|法院|检察院|健身房|游泳馆|球场|公园|广场|小区|楼道|电梯|地下车库|停车场|马路|街道|巷口|胡同|十字路口|天桥|地下通道|直播间|镜头前|舞台上|讲台|婚礼现场|产房|手术室外|ICU|病房|药房|便利店|超市|商场|百货|专柜|档口|库房|仓库|档案室|茶馆|咖啡厅|酒吧|书店|画廊|博物馆|剧院|电影院|KTV|理发店|美甲店|菜市|大会|发布会|展会|研讨会|峰会|论坛|年会|庆典|典礼|开幕式|闭幕式|毕业典礼|拆迁现场|工地|旧城|老街|城中村|棚户区)/);
+  var timeMatch=text.match(/(早上|凌晨|清早|清晨|天没亮|上午|中午|午后|下午|黄昏|傍晚|晚上|深夜|半夜|黎明|拂晓|下班前|下班后|上班前|上班后|节假日|周末|周一到周五|年前|年后|开学|毕业|毕业季|开学季|加班时|开会前|开会后|演示前|演示中|演示后|直播前|直播中|直播后|下播后|开播前|收摊前|打烊前|关门前|末班车|最后一班|最后一单|最后一课|最后一天)/);
+  /* 场景动作：找一个能定情境的动词/名词事件 */
+  var evtMatch=text.match(/(毕业|开学|搬家|拆迁|开业|周年|婚礼|丧礼|生病|感冒|发烧|急诊|演出|表演|比赛|竞赛|面试|入职|离职|退休|晋升|加薪|裁员|创业|失败|成功|获奖|颁奖|表扬|批评|投诉|纠纷|维权|退货|退款|换货|抢修|停电|停水|断网|系统崩了|系统崩溃|加载失败|演示翻车|直播翻车|冷场|尴尬|出丑|失误|错误)/);
+
+  /* 拼装场景 */
+  if(placeMatch&&timeMatch){scene=timeMatch[0]+'在'+placeMatch[0]}
+  else if(placeMatch){scene=placeMatch[0]+'里'}
+  else if(timeMatch){scene=timeMatch[0]+'的工作时刻'}
+  else if(evtMatch){scene=evtMatch[0]+'的那个时刻'}
+  else{scene='日常工作里被一个瞬间击中'}
+
+  return {person:person.slice(0,20), scene:scene.slice(0,30), detail:detail.slice(0,120)};
+}
+
+/* 把拆解结果应用到表单 */
+function voiceApplyToForm(parsed){
+  if(!parsed){toast('拆解失败，请重试或调整原文');return}
+  $('#f-person').value=parsed.person;
+  $('#f-scene').value=parsed.scene;
+  $('#f-detail').value=parsed.detail;
+  saveFormDraft();
+  toast('✓ 已填入 Q1 / Q2 / Q3，请勾选 Q4-Q7 后点开始');
+  /* 让完整表单滚入视野：找到含 f-person 的最近 form-sheet */
+  var fullForm=$('#f-person');
+  if(fullForm){
+    var sheet=fullForm;
+    while(sheet&&!sheet.classList.contains('form-sheet')){sheet=sheet.parentElement}
+    if(sheet&&sheet.scrollIntoView){sheet.scrollIntoView({behavior:'smooth',block:'start'})}
+  }
+}
+
+/* 复制 opencode 提示词（粘到 AI 就拆） */
+function voiceCopyPrompt(){
+  var text=$('#voice-transcript').value.trim();
+  if(!text){toast('请先讲一段内容');return}
+  var prompt='请把下面这段口述见闻，拆成三个字段：\n\n【口述原文】\n'+text+'\n\n【输出格式】\n严格输出一个 JSON，不要其他内容：\n{"person":"人物或职业（如：菜市场卖鱼的大姐）","scene":"一个具体场景（如：给老顾客留了最好的一条鱼）","detail":"一条用户亲眼看到的具体细节，最好是「嘴上说X，手Y」式（如：嘴上说卖完了，手上已经把鱼装袋）"}\n\n【要求】\n1. person 不超过 15 字；scene 不超过 25 字；detail 不超过 60 字\n2. detail 必须保留"嘴上说...手做..."这种对位结构，如果原文有的话\n3. 如果原文没明显场景，根据 person 推一个最日常的工作场景\n4. 直接输出 JSON，不要用 markdown 代码块包裹';
+  function done(){toast('提示词已复制 → 去 opencode 粘贴给 AI')}
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(prompt).then(done,function(){fallback()});
+  }else{fallback()}
+  function fallback(){
+    var ta=document.createElement('textarea');
+    ta.value=prompt;document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');done()}catch(e){toast('复制失败')}
+    document.body.removeChild(ta);
+  }
+}
+
+/* 解析从 opencode 粘回的拆解结果（支持 JSON 或三段式） */
+function voiceParseImport(raw){
+  raw=(raw||'').trim();
+  if(!raw)return null;
+  /* 先尝试 JSON */
+  try{
+    var j=JSON.parse(raw);
+    if(j&&(j.person||j.scene||j.detail)){
+      return {person:String(j.person||''),scene:String(j.scene||''),detail:String(j.detail||'')};
+    }
+  }catch(e){}
+  /* 尝试从 markdown 代码块里提取 JSON */
+  var mdMatch=raw.match(/```(?:json)?\s*([\s\S]+?)```/);
+  if(mdMatch){
+    try{
+      var j2=JSON.parse(mdMatch[1].trim());
+      if(j2&&(j2.person||j2.scene||j2.detail)){
+        return {person:String(j2.person||''),scene:String(j2.scene||''),detail:String(j2.detail||'')};
+      }
+    }catch(e){}
+  }
+  /* 尝试用大括号定位完整 JSON */
+  var braceMatch=raw.match(/\{[\s\S]+?\}/);
+  if(braceMatch){
+    try{
+      var j3=JSON.parse(braceMatch[0]);
+      if(j3&&(j3.person||j3.scene||j3.detail)){
+        return {person:String(j3.person||''),scene:String(j3.scene||''),detail:String(j3.detail||'')};
+      }
+    }catch(e){}
+  }
+  /* 尝试三段式文本 */
+  var pM=raw.match(/(?:人物|Q1|person|职业)[：:]\s*(.+)/);
+  var sM=raw.match(/(?:场景|Q2|scene)[：:]\s*(.+)/);
+  var dM=raw.match(/(?:细节|Q3|detail|观察)[：:]\s*(.+)/);
+  if(pM&&sM&&dM){
+    return {person:pM[1].trim(),scene:sM[1].trim(),detail:dM[1].trim()};
+  }
+  return null;
+}
+
 /* ---------- 标签页 ---------- */
 function go(tab){
   $$('#tabs .tab').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-tab')===tab)});
   $$('main .panel').forEach(function(p){p.classList.toggle('active',p.id==='panel-'+tab)});
   window.scrollTo({top:0});
+}
+
+/* ---------- 一句话快记 ---------- */
+/* 解析一句快记："卖鱼大姐 嘴上说卖完了 手已经把鱼装袋"
+   规则：找到「嘴上说/嘴上」前的名词短语作为人物；
+   之后整段作为细节；场景默认为"日常工作场景"。 */
+function parseQuickNote(raw){
+  raw=(raw||'').trim();
+  if(!raw)return null;
+  /* 支持多种分隔：空白 / 中文冒号 / 破折号 / "，" / "，" */
+  var sepMatch=raw.match(/^(.+?)[\s:：\-—,，]+(.+)$/);
+  if(!sepMatch)return null;
+  var person=sepMatch[1].trim();
+  var detail=sepMatch[2].trim();
+  /* 人物字段过长时尝试截断：取前面像职业短语的部分 */
+  if(person.length>24)person=person.slice(0,24);
+  /* 默认场景：从细节推断；找不到就用通用 */
+  var scene='日常工作里被一个瞬间击中';
+  if(/早市|凌晨|开市/.test(detail))scene='清晨刚开市';
+  else if(/早高峰|早班|打卡/.test(detail))scene='早高峰时段';
+  else if(/下班|收摊|收工|打烊/.test(detail))scene='一天结束前的最后半小时';
+  else if(/客户|甲方|汇报|演示|路演/.test(detail))scene='一次关键汇报/演示中';
+  else if(/学生|考试|毕业/.test(detail))scene='一次普通但意味深长的课堂/课间';
+  return {person:person,detail:detail,scene:scene};
+}
+function doQuickNote(){
+  var raw=$('#f-quick').value;
+  var parsed=parseQuickNote(raw);
+  if(!parsed){toast('快记格式：「职业 + 空格 + 亲眼细节」');return}
+  var f={person:parsed.person,scene:parsed.scene,detail:parsed.detail,
+         duration:30,cast:2,brand:false,tpl:'tpl-general'};
+  writeForm(f);
+  /* 快记默认不联网（现场演示节奏太快）；如完整表单已开启联网则跟随 */
+  f=readForm();
+  if(f.online){
+    var key=(localStorage.getItem('rj_tavily_key')||'').trim();
+    if(key){
+      toast('联网调研中…');
+      tavilySearch(f.person+' '+f.detail, key).then(function(snippets){
+        if(snippets){injectOnlineSnippets(snippets, f)}
+        generate(readForm()); renderDossier(); go('dossier');
+      });
+      return;
+    }
+  }
+  generate(readForm());
+  renderDossier();
+  go('dossier');
+  toast('已生成：'+parsed.person);
+}
+function doQuickToForm(){
+  var raw=$('#f-quick').value;
+  var parsed=parseQuickNote(raw);
+  if(!parsed){toast('快记格式：「职业 + 空格 + 亲眼细节」');return}
+  /* 仅填入三项核心字段，其他保留默认 */
+  $('#f-person').value=parsed.person;
+  $('#f-scene').value=parsed.scene;
+  $('#f-detail').value=parsed.detail;
+  saveFormDraft();
+  toast('已填入下方表单，可继续完善其他选项');
+  /* 视觉引导：让完整表单滚入视野 */
+  var fullForm=$('#f-person');
+  if(fullForm){
+    var sheet=fullForm;
+    while(sheet&&!sheet.classList.contains('form-sheet')){sheet=sheet.parentElement}
+    if(sheet&&sheet.scrollIntoView){sheet.scrollIntoView({behavior:'smooth',block:'start'})}
+  }
 }
 
 /* ---------- 初始化 ---------- */
@@ -1575,14 +2242,69 @@ function go(tab){
   });
   $('#f-brand').addEventListener('change',saveFormDraft);
   $('#f-tpl').addEventListener('change',function(){updateTplHint();saveFormDraft()});
+  /* 联网模式开关 */
+  $('#f-online').addEventListener('change',function(){
+    $('#online-config').style.display=this.checked?'block':'none';
+    saveFormDraft();
+  });
+  /* Tavily Key 单独存储，不进 LS_FORM */
+  $('#f-tavily-key').addEventListener('input',function(){
+    try{localStorage.setItem('rj_tavily_key',this.value.trim())}catch(e){}
+  });
+  /* 页面初始化时恢复 key */
+  try{
+    var savedKey=localStorage.getItem('rj_tavily_key')||'';
+    if(savedKey)$('#f-tavily-key').value=savedKey;
+  }catch(e){}
+
+  /* kimi 开关 + key/model 持久化 */
+  $('#f-use-kimi').addEventListener('change',function(){
+    $('#kimi-config').style.display=this.checked?'block':'none';
+    try{localStorage.setItem('rj_use_kimi',this.checked?'1':'')}catch(e){}
+  });
+  $('#f-kimi-key').addEventListener('input',function(){
+    try{localStorage.setItem('rj_kimi_key',this.value.trim())}catch(e){}
+  });
+  $('#f-kimi-model').addEventListener('input',function(){
+    try{localStorage.setItem('rj_kimi_model',this.value.trim())}catch(e){}
+  });
+  try{
+    var savedKimiKey=localStorage.getItem('rj_kimi_key')||'';
+    if(savedKimiKey)$('#f-kimi-key').value=savedKimiKey;
+    var savedKimiModel=localStorage.getItem('rj_kimi_model')||'';
+    if(savedKimiModel)$('#f-kimi-model').value=savedKimiModel;
+    var useKimi=localStorage.getItem('rj_use_kimi')==='1';
+    if(useKimi){$('#f-use-kimi').checked=true;$('#kimi-config').style.display='block'}
+  }catch(e){}
 
   $('#btn-submit').onclick=function(){
     var f=readForm();
     if(!f.person||!f.scene||!f.detail){
       toast('人物、场景、亲眼观察的细节，三项为必填');return;
     }
-    generate(f); renderDossier(); go('dossier');
-    toast('档案已生成：'+f.person);
+    /* 联网模式：先搜再生。失败/超时自动降级 */
+    if(f.online){
+      var key=(localStorage.getItem('rj_tavily_key')||'').trim();
+      if(!key){
+        toast('已启用联网模式但未填 Key，本次走本地档案库');
+        generate(f); renderDossier(); go('dossier'); return;
+      }
+      toast('正在联网调研「'+f.person+'」…');
+      var btn=this; btn.disabled=true;
+      tavilySearch(f.person+' '+f.scene+' '+f.detail, key).then(function(snippets){
+        btn.disabled=false;
+        if(snippets){
+          var added=injectOnlineSnippets(snippets, f);
+          toast(added?('已注入 '+added+' 条真实观察'):'搜索返回为空，走本地库');
+        }else{
+          toast('网络调研超时/失败，走本地库');
+        }
+        generate(f); renderDossier(); go('dossier');
+      });
+    }else{
+      generate(f); renderDossier(); go('dossier');
+      toast('档案已生成：'+f.person);
+    }
   };
   $('#btn-example').onclick=function(){
     presetIdx=0;
@@ -1593,6 +2315,119 @@ function go(tab){
   };
   $('#btn-next-sit').onclick=function(){loadNextPreset(false)};
   $('#btn-reset-form').onclick=function(){resetAll()};
+
+  /* 一句话快记按钮绑定 */
+  $('#btn-quick').onclick=function(){doQuickNote()};
+  $('#btn-quick-to-form').onclick=function(){doQuickToForm()};
+  $('#f-quick').addEventListener('keydown',function(e){
+    if(e.key==='Enter'){e.preventDefault();doQuickNote()}
+  });
+
+  /* 语音输入按钮绑定 */
+  $('#btn-voice-start').onclick=function(){voiceStart()};
+  $('#btn-voice-stop').onclick=function(){voiceStop()};
+  $('#btn-voice-clear').onclick=function(){voiceClear()};
+  $('#btn-voice-split').onclick=function(){
+    var text=$('#voice-transcript').value.trim();
+    var parsed=voiceSplitLocal(text);
+    voiceApplyToForm(parsed);
+  };
+  $('#btn-voice-copy-prompt').onclick=function(){
+    voiceCopyPrompt();
+    /* 同时展开导入区，方便用户粘回 */
+    $('#voice-import-zone').style.display='block';
+  };
+  $('#btn-voice-import-apply').onclick=function(){
+    var parsed=voiceParseImport($('#voice-import').value);
+    if(parsed){
+      voiceApplyToForm(parsed);
+      $('#voice-import-zone').style.display='none';
+      $('#voice-import').value='';
+    }else{
+      toast('无法识别格式，请贴入 JSON 或 三段式文本');
+    }
+  };
+  $('#btn-voice-import-cancel').onclick=function(){
+    $('#voice-import-zone').style.display='none';
+    $('#voice-import').value='';
+  };
+  /* 语音 textarea 有内容时启用拆分按钮 */
+  $('#voice-transcript').addEventListener('input',function(){
+    var has=this.value.trim();
+    $('#btn-voice-split').disabled=!has;
+    $('#btn-voice-split-kimi').disabled=!has;
+  });
+  /* 「✨ AI 拆分」按钮：调 kimi 拆口述 */
+  $('#btn-voice-split-kimi').onclick=function(){
+    var text=$('#voice-transcript').value.trim();
+    if(!text){toast('先说一段');return}
+    var key=(localStorage.getItem('rj_kimi_key')||'').trim();
+    if(!key){toast('请先在下方"启用 kimi"处填 API Key');$('#f-use-kimi').checked=true;$('#kimi-config').style.display='block';$('#f-kimi-key').focus();return}
+    var btn=this;btn.disabled=true;var oldText=btn.textContent;btn.textContent='kimi 拆分中…';
+    kimiSplitVoice(text).then(function(res){
+      btn.disabled=false;btn.textContent=oldText;
+      if(res){
+        voiceApplyToForm(res);
+        toast('kimi 拆分完成');
+      }else{
+        toast('kimi 拆分失败，试试本地规则拆分');
+      }
+    });
+  };
+
+  /* 「✨ 用 kimi 生成档案」按钮（form 区） */
+  $('#btn-submit-kimi').onclick=function(){
+    var f=readForm();
+    if(!f.person||!f.scene||!f.detail){
+      toast('请先填好 Q1/Q2/Q3（人物 / 场景 / 细节）');return;
+    }
+    var key=(localStorage.getItem('rj_kimi_key')||'').trim();
+    if(!key){toast('请先勾选"启用 kimi"并填 API Key');$('#f-use-kimi').checked=true;$('#kimi-config').style.display='block';$('#f-kimi-key').focus();return}
+    var btn=this;btn.disabled=true;var oldText=btn.textContent;btn.textContent='kimi 生成中（10-30秒）…';
+    var tplName=f.tpl==='tpl-jindui'?'金兑式都市人物图鉴':'通用观察型';
+    var prompt='你是一位短视频剧情编剧。请基于下面的田野记录，严格按照 JSON 输出一份 12 节角色档案。\n\n'+
+      '【用户田野记录】\n人物：'+f.person+'\n场景：'+f.scene+'\n亲眼细节：'+f.detail+'\n时长：'+f.duration+'秒 / 出镜人数：'+f.cast+'人 / 品牌植入：'+(f.brand?'是':'否')+'\n风格模板：'+tplName+'\n\n'+
+      '【输出格式】严格输出 JSON，所有字段都必须存在，不要省略：\n'+
+      '{"identity":"一句话身份定位","desire":{"overt":"显性欲望","covert":"隐性欲望"},"language":[{"line":"口头禅1","when":"使用时机"},{"line":"口头禅2","when":"时机"},{"line":"口头禅3","when":"时机"},{"line":"口头禅4","when":"时机"},{"line":"口头禅5","when":"时机"}],"microactions":[{"action":"微动作1","reveals":"暴露心态"},{"action":"微动作2","reveals":"心态"},{"action":"微动作3","reveals":"心态"},{"action":"微动作4","reveals":"心态"},{"action":"微动作5","reveals":"心态"}],"props":[{"item":"物件1","function":"叙事功能"},{"item":"物件2","function":"功能"},{"item":"物件3","function":"功能"}],"relationships":"对不同人的态度差别（一段话）","contrasts":[{"say":"嘴上说","do":"实际做"},{"say":"嘴上说","do":"实际做"},{"say":"嘴上说","do":"实际做"},{"say":"嘴上说","do":"实际做"},{"say":"嘴上说","do":"实际做"}],"situations":[{"type":"日常情境","story":"一段话"},{"type":"意外情境","story":"一段话"},{"type":"高光情境","story":"一段话"}],"shots":[{"time":"0-10s","shot":"镜头描述"},{"time":"10-20s","shot":"镜头"},{"time":"20-30s","shot":"镜头"},{"time":"30-40s","shot":"镜头"},{"time":"40-50s","shot":"镜头"},{"time":"50-60s","shot":"镜头"}],"risks":{"empathy":3,"comprehension":4,"harm":2,"fix":"若误伤≥3必须给替代写法"},"checklist":["待确认观察1","待确认观察2","待确认观察3"]}\n\n'+
+      '要求：\n- 所有内容必须基于用户的"亲眼细节"展开，不要瞎编\n- 口头禅、微动作、物件要具体到"演员能照着演"的程度\n- 误伤风险 harm≥3 时，fix 字段必须给出替代写法\n- 不要影射具体真人，不写真实姓名\n\n直接输出 JSON 对象，不要其他多余文字。';
+    callKimi(prompt,{max_tokens:3000,temperature:0.7,timeout:45000}).then(function(txt){
+      btn.disabled=false;btn.textContent=oldText;
+      if(!txt){toast('kimi 生成失败/超时，改用本地模板');return}
+      var m=txt.match(/\{[\s\S]*\}/);
+      if(!m){toast('kimi 返回格式异常，改用本地模板');return}
+      try{
+        var dossier=JSON.parse(m[0]);
+        window._KIMI_DOSSIER=dossier;
+        toast('kimi 已生成档案，正在渲染…');
+        renderKimiDossier(dossier,f);
+        go('dossier');
+      }catch(e){
+        toast('kimi 返回的 JSON 无法解析，改用本地模板');
+      }
+    });
+  };
+
+  /* 「✨ 让 kimi 补充」按钮（通告页） */
+  $('#btn-kimi-enrich').onclick=function(){
+    var key=(localStorage.getItem('rj_kimi_key')||'').trim();
+    if(!key){toast('请先在表单页填 Kimi API Key');return}
+    var notice=$('#notice-print').textContent||'';
+    if(!notice){toast('请先生成通告');return}
+    var btn=this;btn.disabled=true;var oldText=btn.textContent;btn.textContent='kimi 补充中…';
+    var prompt='下面是一份短视频拍摄通告：\n\n'+notice.slice(0,1500)+'\n\n请你作为资深导演，补充 3 条实用建议：\n1. 拍摄现场最容易掉链子的环节；\n2. 可以加一句什么台词让人物更立体；\n3. 一个镜头调度上的小建议。\n\n用中文，分 3 点，每点不超过 50 字，直接给建议不要说废话。';
+    callKimi(prompt,{max_tokens:600,temperature:0.7}).then(function(txt){
+      btn.disabled=false;btn.textContent=oldText;
+      if(txt){
+        var box=document.createElement('div');
+        box.style.cssText='margin:16px 0;padding:14px;background:rgba(180,60,50,.06);border-left:3px solid #b43c32;font-size:14px;line-height:1.8;white-space:pre-wrap;';
+        box.textContent='✨ kimi 导演建议：\n'+txt;
+        $('#notice-print').prepend(box);
+        toast('kimi 建议已加到通告顶部');
+      }else{
+        toast('kimi 补充失败');
+      }
+    });
+  };
 
   $('#btn-new-tpl').onclick=function(){openTplEditor(null)};
   $('#tpl-cancel').onclick=closeTplEditor;
